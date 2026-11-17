@@ -261,14 +261,17 @@ export function buildStreet(): Street {
     u.name = 'kantoor-uithangbord';
     group.add(u);
   }
-  // icoon op de toren: wit vlak met navy rand
-  const tz = off.minZ + 2.6, ty = 8.4;
-  b.box(0.1, 2.5, 2.5, tx0 - 0.05, ty - 1.25, tz, THEME.navy);
-  const toren = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 2.3), icoonMateriaal());
-  toren.rotation.y = -Math.PI / 2;
-  toren.position.set(tx0 - 0.11, ty, tz);
-  toren.name = 'kantoor-toren-logo';
-  group.add(toren);
+  // icoon op een bord op het dak van de toren (twee poten, navy rand, logo aan beide kanten)
+  const tz = off.minZ + 2.6, bx = tx0 + 1.4, dak = 10.5, by = dak + 0.6 + 1.3;
+  for (const dz of [-0.85, 0.85]) b.box(0.14, 0.8, 0.14, bx, dak, tz + dz, THEME.navy);
+  b.box(0.12, 2.6, 2.6, bx, by - 1.3, tz, THEME.navy);
+  for (const kant of [-1, 1]) {
+    const toren = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), icoonMateriaal());
+    toren.rotation.y = kant < 0 ? -Math.PI / 2 : Math.PI / 2;
+    toren.position.set(bx + kant * 0.065, by, tz);
+    toren.name = 'kantoor-toren-logo';
+    group.add(toren);
+  }
 
   // ---------- Overkant: bomen, lantaarns, fietsenstalling ----------
   const tree = (x: number, z: number, s: number, k: number) => {
