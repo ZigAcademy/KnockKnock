@@ -12,7 +12,7 @@ export interface Persoon { naam: string; rol?: string; portret?: string }
 export class AchterDeSchermen {
   private el: HTMLElement;
 
-  constructor(root: HTMLElement, private reducedMotion: () => boolean, private stemAan: () => boolean = () => false) {
+  constructor(root: HTMLElement, private reducedMotion: () => boolean, private stemAan: () => boolean = () => false, private zetStem: (aan: boolean) => void = () => {}) {
     this.el = document.createElement('div');
     this.el.className = 'ads-wrap';
     this.el.hidden = true;
@@ -41,7 +41,7 @@ export class AchterDeSchermen {
           ${onderdelen.map(() => `<li class="ads-stap ads-onderdeel"><span class="ads-naam"></span><span class="ads-kort"></span></li>`).join('')}
           ${medewerkers.map((m) => persoon(m, 'ads-medewerker')).join('')}
         </ol>
-        <div class="ads-acties"><button type="button" class="btn" data-testid="ads-knop"></button></div>
+        <div class="ads-acties">${stem ? '<button type="button" class="btn btn--ghost ads-stem" data-testid="ads-stem"></button>' : ''}<button type="button" class="btn" data-testid="ads-knop"></button></div>
       </section>`;
     // teksten veilig invullen
     const stappen = [...this.el.querySelectorAll<HTMLElement>('.ads-stap')];
@@ -69,17 +69,36 @@ export class AchterDeSchermen {
       if (rm) toonStap(i);
       else setTimeout(() => toonStap(i), 250 + i * 450);
     });
-    // voice-over: lees de route voor en laat de stap oplichten die op dat moment aan de beurt is
-    if (stem && this.stemAan()) {
-      (async () => {
-        await geluid.spreek(stem.intro);
-        for (let i = 0; i < stappen.length && !gestopt; i++) {
-          stappen.forEach((li, k) => li.classList.toggle('actief', k === i));
-          if (!(await geluid.spreek(stem.stappen[i]))) break;
-        }
-        stappen.forEach((li) => li.classList.remove('actief'));
-      })();
-    }
+    // voice-over: lees de route voor en laat de stap oplichten die op dat moment aan de beurt is.
+    // Met de knop "Voice-over uit/aan" kun je hem stoppen of opnieuw laten beginnen (geldt voor het hele spel).
+    let ronde = 0;
+    const voorlezen = async () => {
+      const mijn = ++ronde;
+      await geluid.spreek(stem!.intro);
+      for (let i = 0; i < stappen.length && !gestopt && mijn === ronde; i++) {
+        stappen.forEach((li, k) => li.classList.toggle('actief', k === i));
+        if (!(await geluid.spreek(stem!.stappen[i]))) break;
+      }
+      if (mijn === ronde) stappen.forEach((li) => li.classList.remove('actief'));
+    };
+    const stemKnop = this.el.querySelector<HTMLButtonElement>('[data-testid="ads-stem"]');
+    const zetKnop = () => {
+      if (!stemKnop) return;
+      const aan = this.stemAan();
+      stemKnop.textContent = aan ? t('voiceOverUit') : t('voiceOverAan');
+      stemKnop.setAttribute('aria-pressed', String(aan));
+    };
+    if (stemKnop) stemKnop.onclick = () => {
+      const aan = !this.stemAan();
+      this.zetStem(aan);
+      ronde++;
+      geluid.stopSpreken();
+      stappen.forEach((li) => li.classList.remove('actief'));
+      if (aan) void voorlezen();
+      zetKnop();
+    };
+    zetKnop();
+    if (stem && this.stemAan()) void voorlezen();
     btn.focus();
     return new Promise((r) => btn.addEventListener('click', () => { gestopt = true; geluid.stopSpreken(); this.el.hidden = true; this.el.innerHTML = ''; r(); }, { once: true }));
   }

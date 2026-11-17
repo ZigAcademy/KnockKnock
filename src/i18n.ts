@@ -75,6 +75,8 @@ const UI: Record<string, { nl: Waarde; en: Waarde }> = {
   achterDeSchermen: { nl: 'Achter de schermen', en: 'Behind the scenes' },
   achterIntro: { nl: 'Zo liep deze vraag van de huurder door Zig365 naar de medewerkers van de corporatie.', en: "This is how the tenant's request travelled through Zig365 to the housing association's staff." },
   huurderRol: { nl: 'huurder', en: 'tenant' },
+  voiceOverUit: { nl: 'Voice-over uit', en: 'Voice-over off' },
+  voiceOverAan: { nl: 'Voice-over aan', en: 'Voice-over on' },
   herkansingTitel: { nl: 'Nog even oefenen?', en: 'Practise a bit more?' },
   herkansingTekst: { nl: (n, m) => `${n} van de ${m} vragen had je niet in één keer goed. Wil je die nog een keer proberen? Je score blijft gelijk.`, en: (n, m) => `You didn't get ${n} of the ${m} questions right first time. Want to try them again? Your score stays the same.` },
   oefenen: { nl: 'Ja, oefenen', en: 'Yes, practise' },

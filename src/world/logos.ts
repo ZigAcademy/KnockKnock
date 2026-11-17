@@ -26,8 +26,26 @@ function laad(url: string, bijsnijden: boolean): THREE.Texture {
   return t;
 }
 
+const VERF = { nl: './assets/logo/huis-en-haard-verf.png', en: './assets/logo/hearth-and-home-verf.png' };
 const woordmerken: THREE.MeshStandardMaterial[] = [];
-opTaal(() => { for (const m of woordmerken) { m.map = laad(BESTAND[getTaal()], true); m.needsUpdate = true; } });
+const verfLogos: THREE.MeshStandardMaterial[] = [];
+opTaal(() => {
+  for (const m of woordmerken) { m.map = laad(BESTAND[getTaal()], true); m.needsUpdate = true; }
+  for (const m of verfLogos) { m.map = laad(VERF[getTaal()], false); m.needsUpdate = true; }
+});
+
+/**
+ * Woordmerk zonder achtergrond, alsof het op de lak geschilderd is (busje).
+ * Zelfde belichting als de lak, geen eigen glans; ligt net boven het oppervlak.
+ */
+export function woordmerkVerfMateriaal(): THREE.MeshStandardMaterial {
+  const m = new THREE.MeshStandardMaterial({
+    map: laad(VERF[getTaal()], false), transparent: true, alphaTest: 0.05, roughness: 0.85, metalness: 0,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, depthWrite: false,
+  });
+  verfLogos.push(m);
+  return m;
+}
 
 /** Materiaal met het woordmerk in de huidige taal (wisselt mee met de taal). */
 export function woordmerkMateriaal(): THREE.MeshStandardMaterial {

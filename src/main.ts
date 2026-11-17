@@ -75,7 +75,9 @@ async function start(): Promise<void> {
   const huurderfase = new HuurderFase({
     content, street, cards, ui, canvas: renderer.domElement, progress, transition, reducedMotion, setView,
   });
-  const achter = new AchterDeSchermen(ui, reducedMotion, () => settings.waarden.voiceOver && settings.waarden.geluid);
+  const achter = new AchterDeSchermen(ui, reducedMotion,
+    () => settings.waarden.voiceOver && settings.waarden.geluid,
+    (aan) => { settings.zet('voiceOver', aan); if (aan && !settings.waarden.geluid) settings.zet('geluid', true); });
   const corporatiefase = new CorporatieFase({ content, street, cards, zig, transition, progress, reducedMotion, setView, achter });
 
   // HUD, panelen, SCORM

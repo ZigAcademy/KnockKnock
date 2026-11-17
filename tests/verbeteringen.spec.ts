@@ -212,6 +212,24 @@ test.describe('3 + 4. herkansing en achter de schermen', () => {
     const past = await page.evaluate(() => { const r = document.querySelector('.ads-route')!; return r.scrollWidth <= r.clientWidth + 1; });
     expect(past).toBe(true);
     await page.screenshot({ path: `${SHOTS}/73-achter-de-schermen.png` });
+    // voice-over uitzetten vanuit dit scherm: geldt meteen voor het hele spel
+    const stemKnop = page.getByTestId('ads-stem');
+    await expect(stemKnop).toHaveText('Voice-over uit');
+    await stemKnop.click();
+    await expect(stemKnop).toHaveText('Voice-over aan');
+    await expect(stemKnop).toHaveAttribute('aria-pressed', 'false');
+    await expect(ads.locator('.ads-stap.actief')).toHaveCount(0);
+    await expect(page.getByTestId('knop-voiceover')).toHaveAttribute('aria-pressed', 'false');
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wijkwijs-instellingen') ?? '{}').voiceOver)).toBe(false);
+    // stopt de stem echt? na het uitzetten worden er geen nieuwe fragmenten meer opgehaald
+    const voor = stemmen.length;
+    await page.waitForTimeout(2500);
+    expect(stemmen.length).toBe(voor);
+    // en weer aan: begint opnieuw met voorlezen
+    await stemKnop.click();
+    await expect(stemKnop).toHaveText('Voice-over uit');
+    await expect(page.getByTestId('knop-voiceover')).toHaveAttribute('aria-pressed', 'true');
+    await page.getByTestId('ads-knop').focus();
     await page.keyboard.press('Enter');
     await expect(ads).toBeHidden();
 

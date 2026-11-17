@@ -4,7 +4,7 @@ import { Character } from '../player/character';
 import { DECOR_LOOKS } from './looks';
 import { MODELLEN, kitMesh, demp } from '../assets/modellen';
 import { herkleurLak } from './paletten';
-import { woordmerkMateriaal, WOORDMERK_VERHOUDING } from './logos';
+import { woordmerkVerfMateriaal, WOORDMERK_VERHOUDING } from './logos';
 import type { Collider } from './collision';
 import { geluid } from '../audio/geluid';
 
@@ -149,6 +149,18 @@ class Hond {
   }
 }
 
+/** Grijze carrosserie (licht, weinig kleur) naar een frisse witte lak; ramen en banden blijven. */
+function maakWit(geo: THREE.BufferGeometry): void {
+  const col = geo.getAttribute('color') as THREE.BufferAttribute | undefined;
+  if (!col) return;
+  const c = new THREE.Color(), hsl = { h: 0, s: 0, l: 0 }, wit = new THREE.Color('#F4F6F8');
+  for (let i = 0; i < col.count; i++) {
+    c.setRGB(col.getX(i), col.getY(i), col.getZ(i)).getHSL(hsl);
+    if (hsl.l > 0.3 && hsl.s < 0.25) { c.lerp(wit, 0.7); col.setXYZ(i, c.r, c.g, c.b); }
+  }
+  col.needsUpdate = true;
+}
+
 /** Auto die rustig rondjes rijdt en stopt als de speler (of iemand) voor hem staat. */
 class RijdendeAuto {
   readonly mesh: THREE.Object3D;
@@ -172,6 +184,7 @@ class RijdendeAuto {
     const m = kitMesh('autos', opts.model ?? 'hatchback', { w: opts.model === 'van' ? 1.7 : 1.5 });
     if (m) {
       herkleurLak(m.geometry, lak);
+      if (opts.logo) maakWit(m.geometry);
       this.mesh = m;
     } else {
       const g = new THREE.Group();
@@ -184,15 +197,26 @@ class RijdendeAuto {
     }
     if (opts.logo) {
       // logo van de corporatie op beide zijkanten (wisselt mee met de taal)
+      // Het logo komt plat op het vlakke deel van de zijkant: boven de wielkasten, onder de ramen,
+      // achter de spiegel. De afstand tot de zijkant meten we met een straal (geen buitenmaat:
+      // die bevat ook spiegels en bumpers).
+      this.mesh.updateMatrixWorld(true);
       const b = new THREE.Box3().setFromObject(this.mesh);
       const lengte = b.max.z - b.min.z, hoogte = b.max.y - b.min.y;
-      const lw = lengte * 0.62, lh = lw / WOORDMERK_VERHOUDING;
+      // vrije strook tussen de rand van de wielkasten (±50%) en de ramen (±66% van de hoogte)
+      const y = b.min.y + hoogte * 0.575, zc = (b.min.z + b.max.z) / 2 - lengte * 0.15;
+      const lw = lengte * 0.4, lh = lw / WOORDMERK_VERHOUDING;
+      const straal = new THREE.Raycaster();
       const groep = new THREE.Group();
       for (const kant of [-1, 1]) {
-        const vlak = new THREE.Mesh(new THREE.PlaneGeometry(lw, lh), woordmerkMateriaal());
+        straal.set(new THREE.Vector3(kant * 5, y, zc), new THREE.Vector3(-kant, 0, 0));
+        const raak = straal.intersectObject(this.mesh, true)[0];
+        const x = raak ? raak.point.x : kant * b.max.x;
+        const vlak = new THREE.Mesh(new THREE.PlaneGeometry(lw, lh), woordmerkVerfMateriaal());
         vlak.rotation.y = kant * Math.PI / 2;
-        vlak.position.set(kant * (b.max.x + 0.012), b.min.y + hoogte * 0.52, (b.min.z + b.max.z) / 2 - lengte * 0.06);
+        vlak.position.set(x + kant * 0.003, y, zc);
         vlak.name = 'busje-logo';
+        vlak.receiveShadow = true;
         groep.add(vlak);
       }
       const geheel = new THREE.Group();

@@ -409,7 +409,7 @@ body.minder-beweging .pin-dot { animation: none; }
 .ads-portret { width: 64px; height: 64px; border-radius: 50%; }
 .ads-naam { font-weight: 600; }
 .ads-rol { font-size: 14px; color: var(--grey); }
-.ads-acties { display: flex; justify-content: flex-end; margin-top: 18px; }
+.ads-acties { display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
 @media (max-width: 1100px) {
   .ads-route { flex-direction: column; gap: 18px; overflow: visible; }
   .ads-stap { flex-direction: row; text-align: left; align-items: center; }
