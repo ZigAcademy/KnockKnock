@@ -1,0 +1,1868 @@
+{
+  "meta": {
+    "titel": {
+      "nl": "Knock Knock!",
+      "en": "Knock Knock!"
+    },
+    "versie": "0.1",
+    "datum": "2026-11-16",
+    "bron": "Zig365-e-learnings (Zig Grow), gebaseerd op het Zig365 Best Practice-procesmodel R2604 (Mavim) en de werkinstructies op community.zig365.nl. Per woning staat in 'bron' uit welke e-learning de inhoud komt.",
+    "privacy": "Alle namen, adressen en bedragen zijn fictief en komen uit de e-learnings. Geen echte klant-, huurder- of medewerkergegevens toevoegen.",
+    "corporatie": {
+      "nl": "Huis & Haard (fictief)",
+      "en": "Hearth & Home (fictional)"
+    },
+    "straat": "Lindelaan (fictief)",
+    "taal": "NL en EN ingevuld. Teksten staan als {nl, en}; opties en volgordes van de corporatiefase in 'opties_en' / 'items_en'; hotspotnamen in 'object_en', namen in 'naam_en', rollen in 'rol_en'."
+  },
+  "producten": [
+    {
+      "id": "huurdersportaal",
+      "naam": "Huurdersportaal",
+      "kort": "Hier regelt de huurder zelf zaken: een reparatieverzoek indienen, een klacht of overlastmelding doen, betaalgegevens wijzigen en met iDEAL betalen. Een melding via het portaal komt automatisch in CRM.",
+      "bron": [
+        "02",
+        "04",
+        "05",
+        "06",
+        "15"
+      ]
+    },
+    {
+      "id": "customer",
+      "naam": "Zig365 | Customer (CRM)",
+      "kort": "Het klantcontactsysteem. Hier leg je contactmomenten, klantvragen, reparatieverzoeken (met de vraagboom), klachten en bezwaren vast. Met 'Meekijken met huurder' zie je het huurdersportaal.",
+      "bron": [
+        "02",
+        "03",
+        "04",
+        "05"
+      ]
+    },
+    {
+      "id": "operations",
+      "naam": "Zig365 | Operations",
+      "kort": "Het ERP voor de bedrijfsvoering: onderhoudsorders, huurprijzen, leefbaarheidsdossiers, facturen, incasso en de financiële administratie.",
+      "bron": [
+        "03",
+        "05",
+        "06",
+        "14",
+        "15"
+      ]
+    },
+    {
+      "id": "maintenance",
+      "naam": "Zig365 | Maintenance",
+      "kort": "Opnames op de tablet: de voorinspectie en eindinspectie bij een huuropzegging.",
+      "bron": [
+        "07"
+      ]
+    },
+    {
+      "id": "matching",
+      "naam": "Zig365 | Matching",
+      "kort": "Hier wordt een vrije woning gepubliceerd en komt de kandidatenlijst tot stand. Na acceptatie gaan de gegevens automatisch naar Operations.",
+      "bron": [
+        "01"
+      ]
+    },
+    {
+      "id": "leveranciersportaal",
+      "naam": "Leveranciersportaal",
+      "kort": "Hier dient een leverancier offertes in, krijgt hij orders na gunning automatisch verstrekt en meldt hij zelf gereed.",
+      "bron": [
+        "06",
+        "08"
+      ]
+    },
+    {
+      "id": "vraagboom",
+      "naam": "Vraagboom",
+      "kort": "Een vragenlijst bij een reparatieverzoek die naar het juiste reparatiesjabloon leidt. Is de vraagboom gebruikt, dan wordt de onderhoudsorder automatisch aangemaakt.",
+      "bron": [
+        "02",
+        "06"
+      ]
+    }
+  ],
+  "personages": {
+    "huurders": [
+      {
+        "id": "farouk",
+        "naam": "de heer Farouk",
+        "voornaam": "Omar",
+        "portret": "omar-farouk",
+        "woning": "w1",
+        "naam_en": "Mr Farouk"
+      },
+      {
+        "id": "mensah",
+        "naam": "de heer Mensah",
+        "portret": "kwame-mensah",
+        "woning": "w2",
+        "naam_en": "Mr Mensah"
+      },
+      {
+        "id": "hansen",
+        "naam": "mevrouw Hansen",
+        "portret": "ingrid-hansen",
+        "woning": "w3",
+        "naam_en": "Mrs Hansen"
+      },
+      {
+        "id": "mulder",
+        "naam": "de heer Mulder",
+        "portret": "thijs-mulder",
+        "woning": "w4",
+        "naam_en": "Mr Mulder"
+      },
+      {
+        "id": "vandijk",
+        "naam": "de heer Van Dijk",
+        "portret": "joost-van-dijk",
+        "woning": "w5",
+        "noot": "In e-learning 14 heet deze huurder Van Dam (zonder portret). Hier krijgt hij het vrije portret joost-van-dijk. Check of dat oké is.",
+        "naam_en": "Mr Van Dijk"
+      },
+      {
+        "id": "volkov",
+        "naam": "de heer Volkov",
+        "portret": "dmitri-volkov",
+        "woning": "w6",
+        "naam_en": "Mr Volkov"
+      },
+      {
+        "id": "yilmaz",
+        "naam": "mevrouw Yilmaz",
+        "portret": "yasmin-yilmaz",
+        "woning": "finale",
+        "naam_en": "Mrs Yilmaz"
+      }
+    ],
+    "medewerkers": [
+      {
+        "id": "anna",
+        "naam": "Anna Kowalska",
+        "rol": "medewerker klantcontact",
+        "portret": "anna-kowalska",
+        "rol_en": "customer contact officer"
+      },
+      {
+        "id": "fatima",
+        "naam": "Fatima El Amrani",
+        "rol": "medewerker onderhoud",
+        "portret": "fatima-el-amrani",
+        "rol_en": "maintenance officer"
+      },
+      {
+        "id": "tariq",
+        "naam": "Tariq Ahmadi",
+        "rol": "consulent wonen",
+        "portret": "tariq-ahmadi",
+        "rol_en": "housing consultant"
+      },
+      {
+        "id": "wei",
+        "naam": "Wei Chen",
+        "rol": "medewerker huuradministratie",
+        "portret": "wei-chen",
+        "rol_en": "rent administration officer"
+      },
+      {
+        "id": "amara",
+        "naam": "Amara Okafor",
+        "rol": "medewerker debiteurenbeheer",
+        "portret": "amara-okafor",
+        "rol_en": "debt management officer"
+      },
+      {
+        "id": "bram",
+        "naam": "Bram Hendriks",
+        "rol": "opzichter",
+        "portret": "bram-hendriks",
+        "rol_en": "property inspector"
+      },
+      {
+        "id": "sanne",
+        "naam": "Sanne Bakker",
+        "rol": "verhuurconsulent",
+        "portret": "sanne-bakker",
+        "rol_en": "lettings consultant"
+      }
+    ]
+  },
+  "woningen": [
+    {
+      "id": "w1",
+      "adres": "Lindelaan 14",
+      "mvp": true,
+      "bron": [
+        "02 Contactmanagement",
+        "06 Reparatieonderhoud"
+      ],
+      "huurder": "farouk",
+      "titel": {
+        "nl": "De lekkende keukenkraan",
+        "en": "The leaking kitchen tap"
+      },
+      "huurderfase": {
+        "deur": {
+          "nl": "Goedemorgen! Fijn dat je er bent. Mijn keukenkraan lekt al een paar dagen. En ik heb een nieuw telefoonnummer, dat moet ik ook nog doorgeven.",
+          "en": "Good morning! Glad you're here. My kitchen tap has been leaking for a few days. And I have a new phone number, I still need to pass that on too."
+        },
+        "hotspots": [
+          {
+            "id": "kraan",
+            "object": "keukenkraan",
+            "kern": true,
+            "tekst": {
+              "nl": "Er drupt water uit de kraan. Onder het aanrecht staat een emmer.",
+              "en": "Water is dripping from the tap. There's a bucket under the counter."
+            },
+            "object_en": "kitchen tap"
+          },
+          {
+            "id": "telefoon",
+            "object": "telefoon op tafel",
+            "kern": false,
+            "tekst": {
+              "nl": "Een nieuwe telefoon. Op een briefje ernaast staat het nieuwe nummer.",
+              "en": "A new phone. A note next to it shows the new number."
+            },
+            "object_en": "phone on the table"
+          },
+          {
+            "id": "laptop",
+            "object": "laptop",
+            "kern": false,
+            "tekst": {
+              "nl": "Het huurdersportaal staat open op het inlogscherm.",
+              "en": "The tenant portal is open on the login screen."
+            },
+            "object_en": "laptop"
+          }
+        ],
+        "dialoog": [
+          {
+            "vraag": {
+              "nl": "Hoe krijg ik die kraan gemaakt?",
+              "en": "How do I get this tap fixed?"
+            },
+            "opties": [
+              {
+                "tekst": {
+                  "nl": "Dien in het huurdersportaal een reparatieverzoek in. Je doorloopt dan een paar vragen, de vraagboom.",
+                  "en": "Submit a repair request in the tenant portal. You'll answer a few questions: the question tree."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Precies. De huurder kan het reparatieverzoek zelf indienen in het huurdersportaal.",
+                  "en": "Exactly. Tenants can submit a repair request themselves in the tenant portal."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Bel de corporatie, dan leggen zij het vast.",
+                  "en": "Call the housing association, they'll record it."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Kan ook. Klanten nemen op veel manieren contact op: portaal, e-mail, balie, telefoon, brief, chat of social media. De werkwijze is steeds dezelfde.",
+                  "en": "That works too. Customers get in touch in many ways: portal, e-mail, front desk, phone, letter, chat or social media. The way of working is always the same."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Wacht maar af, de corporatie ziet het vanzelf.",
+                  "en": "Just wait, the housing association will notice."
+                },
+                "score": 0,
+                "feedback": {
+                  "nl": "Dan weet niemand ervan. Zonder reparatieverzoek gebeurt er niets.",
+                  "en": "Then nobody knows about it. Without a repair request, nothing happens."
+                }
+              }
+            ]
+          },
+          {
+            "vraag": {
+              "nl": "En mijn nieuwe telefoonnummer?",
+              "en": "And my new phone number?"
+            },
+            "opties": [
+              {
+                "tekst": {
+                  "nl": "Geef het door aan de corporatie. Zij passen je contactgegevens aan.",
+                  "en": "Pass it on to the housing association. They'll update your contact details."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Klopt. Bij de corporatie is dat een wijziging van klantinformatie.",
+                  "en": "Right. At the housing association, that's a change to customer information."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Zet het in de toelichting bij je reparatieverzoek.",
+                  "en": "Put it in the notes of your repair request."
+                },
+                "score": 0,
+                "feedback": {
+                  "nl": "Bij de toelichting omschrijf je wat er aan de hand is bij dít verzoek. Een nieuw nummer is een aparte wijziging van je klantgegevens.",
+                  "en": "In the notes you describe what's wrong for this request. A new number is a separate change to your customer details."
+                }
+              }
+            ]
+          }
+        ],
+        "leerpunt": {
+          "nl": "Een huurder meldt een reparatie zelf in het huurdersportaal (met de vraagboom) of via een ander kanaal. Een nieuw telefoonnummer is een aparte wijziging van de klantinformatie.",
+          "en": "A tenant reports a repair in the tenant portal (with the question tree) or through another channel. A new phone number is a separate change to the customer information."
+        }
+      },
+      "corporatiefase": [
+        {
+          "medewerker": "anna",
+          "intro": {
+            "nl": "De heer Farouk belt. Eén telefoontje, twee vragen: een lekkende kraan en een nieuw telefoonnummer.",
+            "en": "Mr Farouk is calling. One call, two questions: a leaking tap and a new phone number."
+          },
+          "stappen": [
+            {
+              "type": "systeem",
+              "vraag": {
+                "nl": "Waar leg je het reparatieverzoek vast?",
+                "en": "Where do you record the repair request?"
+              },
+              "opties": [
+                "Zig365 | Customer (CRM)",
+                "Zig365 | Operations",
+                "Zig365 | Maintenance"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Je legt het verzoek vast in CRM met 'Reparatieverzoek indienen'. Het wordt dan automatisch aangemaakt in Operations.",
+                "en": "You record the request in CRM with 'Submit repair request'. It is then created automatically in Operations."
+              },
+              "bron": "02",
+              "opties_en": [
+                "Zig365 | Customer (CRM)",
+                "Zig365 | Operations",
+                "Zig365 | Maintenance"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Hoe vind je het juiste reparatiesjabloon?",
+                "en": "How do you find the right repair template?"
+              },
+              "opties": [
+                "Door de vraagboom te doorlopen",
+                "Door meteen een afspraak in te plannen",
+                "Door een onderhoudsorder te maken in Operations"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Met de vraagboom vind je het juiste reparatiesjabloon. Daarna plan je, afhankelijk van de uitkomst, de afspraak.",
+                "en": "The question tree helps you find the right repair template. Then, depending on the outcome, you schedule the appointment."
+              },
+              "bron": "02",
+              "opties_en": [
+                "By going through the question tree",
+                "By scheduling an appointment straight away",
+                "By creating a maintenance order in Operations"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "De heer Farouk meldt nog een tweede reparatie. Wat doe je?",
+                "en": "Mr Farouk reports a second repair. What do you do?"
+              },
+              "opties": [
+                "Klik op 'Voeg nog een reparatieverzoek toe' en doorloop de vraagboom opnieuw",
+                "Zet het in de toelichting van het eerste verzoek",
+                "Vraag hem later terug te bellen"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Een tweede melding krijgt een eigen doorloop van de vraagboom.",
+                "en": "A second report gets its own run through the question tree."
+              },
+              "bron": "02",
+              "opties_en": [
+                "Click 'Add another repair request' and go through the question tree again",
+                "Put it in the notes of the first request",
+                "Ask him to call back later"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Bij welk werkproces hoort het nieuwe telefoonnummer?",
+                "en": "Which work process does the new phone number belong to?"
+              },
+              "opties": [
+                "Beheren klantinformatie",
+                "Intake klantvraag – reparatieverzoek",
+                "Afhandelen klantvraag"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Contactgegevens wijzig je in CRM met 'Gegevens wijzigen'. Zoek altijd eerst de relatie op.",
+                "en": "You change contact details in CRM with 'Change details'. Always look up the relation first."
+              },
+              "bron": "02",
+              "opties_en": [
+                "Managing customer information",
+                "Customer request intake – repair request",
+                "Handling customer request"
+              ]
+            }
+          ]
+        },
+        {
+          "medewerker": "fatima",
+          "intro": {
+            "nl": "Het reparatieverzoek staat erin. Nu moet de kraan ook echt gemaakt worden.",
+            "en": "The repair request is in. Now the tap actually needs to be fixed."
+          },
+          "stappen": [
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Bij de intake is de vraagboom gebruikt. Wat gebeurt er met de onderhoudsorder?",
+                "en": "The question tree was used at intake. What happens to the maintenance order?"
+              },
+              "opties": [
+                "Die wordt automatisch aangemaakt",
+                "Die maak je altijd zelf met de hand",
+                "Die maakt de loodgieter aan"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Is bij de intake de vraagboom gebruikt, dan wordt de order automatisch aangemaakt.",
+                "en": "If the question tree was used at intake, the order is created automatically."
+              },
+              "bron": "06",
+              "opties_en": [
+                "It is created automatically",
+                "You always create it manually",
+                "The plumber creates it"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "De eigen loodgieter zegt dat de kraan gemaakt is. Is de reparatie nu klaar in Zig365?",
+                "en": "The in-house plumber says the tap is fixed. Is the repair now finished in Zig365?"
+              },
+              "opties": [
+                "Nee, de onderhoudsorder moet nog technisch gereed worden gemeld",
+                "Ja, als de vakman klaar is, is de order klaar",
+                "Pas als de factuur binnen is"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Het werk is gedaan, maar de order staat nog open. Die meld je technisch gereed. Pas daarna komt de factuur.",
+                "en": "The work is done, but the order is still open. You report it as technically complete. Only then does the invoice come."
+              },
+              "bron": "06",
+              "opties_en": [
+                "No, the maintenance order still needs to be reported technically complete",
+                "Yes, when the tradesperson is done, the order is done",
+                "Only when the invoice has come in"
+              ]
+            },
+            {
+              "type": "volgorde",
+              "vraag": {
+                "nl": "Zet de reis van deze reparatie in de goede volgorde.",
+                "en": "Put the journey of this repair in the right order."
+              },
+              "items": [
+                "Reparatieverzoek vastleggen met de vraagboom",
+                "Onderhoudsorder aanmaken",
+                "Order plannen en verstrekken",
+                "Order technisch gereed melden",
+                "Kosten goedkeuren"
+              ],
+              "uitleg": {
+                "nl": "Regisseren: van onderhoudstaak naar verstrekte order. Realiseren: uitvoeren, bewaken, gereedmelden en kosten goedkeuren.",
+                "en": "Directing: from maintenance task to issued order. Delivering: carrying out, monitoring, reporting complete and approving costs."
+              },
+              "bron": "06",
+              "items_en": [
+                "Record repair request with the question tree",
+                "Create maintenance order",
+                "Schedule and issue order",
+                "Report order technically complete",
+                "Approve costs"
+              ]
+            }
+          ]
+        }
+      ],
+      "afloop": {
+        "nl": "De kraan drupt niet meer en het nieuwe nummer staat erin. De heer Farouk zwaait je uit.",
+        "en": "The tap no longer drips and the new number is recorded. Mr Farouk waves you goodbye."
+      }
+    },
+    {
+      "id": "w2",
+      "adres": "Lindelaan 16",
+      "mvp": true,
+      "bron": [
+        "04 Klachten en klanttevredenheid"
+      ],
+      "huurder": "mensah",
+      "titel": {
+        "nl": "Niemand belt terug",
+        "en": "Nobody calls back"
+      },
+      "huurderfase": {
+        "deur": {
+          "nl": "Ik heb drie keer gebeld over mijn lekkende dakgoot. Niemand belt terug. Ik ben het zat.",
+          "en": "I've called three times about my leaking gutter. Nobody calls back. I'm fed up."
+        },
+        "hotspots": [
+          {
+            "id": "raam",
+            "object": "raam",
+            "kern": true,
+            "tekst": {
+              "nl": "Langs de gevel loopt water naar beneden. De dakgoot lekt.",
+              "en": "Water is running down the front of the house. The gutter is leaking."
+            },
+            "object_en": "window"
+          },
+          {
+            "id": "notitie",
+            "object": "notitieblok bij de telefoon",
+            "kern": true,
+            "tekst": {
+              "nl": "Drie datums, drie keer 'gebeld, terugbellen beloofd'.",
+              "en": "Three dates, three times 'called, promised to call back'."
+            },
+            "object_en": "notepad by the phone"
+          },
+          {
+            "id": "laptop",
+            "object": "laptop",
+            "kern": false,
+            "tekst": {
+              "nl": "Het huurdersportaal staat open.",
+              "en": "The tenant portal is open."
+            },
+            "object_en": "laptop"
+          }
+        ],
+        "dialoog": [
+          {
+            "vraag": {
+              "nl": "Is dit nou een klacht, of gewoon een reparatie?",
+              "en": "So is this a complaint, or just a repair?"
+            },
+            "opties": [
+              {
+                "tekst": {
+                  "nl": "Allebei. De dakgoot is een reparatie. Dat niemand terugbelt is een klacht over de dienstverlening.",
+                  "en": "Both. The gutter is a repair. Nobody calling back is a complaint about the service."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Klopt. Een klacht is ontevredenheid over de dienstverlening van de corporatie.",
+                  "en": "Right. A complaint is dissatisfaction with the housing association's service."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Alleen een reparatie, klagen heeft geen zin.",
+                  "en": "Only a repair, complaining is pointless."
+                },
+                "score": 0,
+                "feedback": {
+                  "nl": "Dat niemand terugbelt is wél een klacht. De corporatie wil dat weten, zodat ze kan uitzoeken wat er misging.",
+                  "en": "Nobody calling back really is a complaint. The housing association wants to know, so it can find out what went wrong."
+                }
+              }
+            ]
+          },
+          {
+            "vraag": {
+              "nl": "Hoe dien ik die klacht dan in?",
+              "en": "So how do I file that complaint?"
+            },
+            "opties": [
+              {
+                "tekst": {
+                  "nl": "Via het huurdersportaal of per e-mail. Dan komt hij automatisch als taak bij de corporatie terecht.",
+                  "en": "Through the tenant portal or by e-mail. Then it automatically becomes a task at the housing association."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Precies. Een klacht via het portaal of per e-mail wordt automatisch een taak in CRM.",
+                  "en": "Exactly. A complaint through the portal or by e-mail automatically becomes a task in CRM."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Nog een keer bellen, dan registreert de medewerker het.",
+                  "en": "Call once more, then the employee will register it."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Kan ook. Dan legt de medewerker de klacht zelf vast.",
+                  "en": "That works too. Then the employee records the complaint themselves."
+                }
+              }
+            ]
+          }
+        ],
+        "leerpunt": {
+          "nl": "Een klacht gaat over de dienstverlening, niet over het gebrek zelf. Via het huurdersportaal of per e-mail komt hij automatisch als taak bij de corporatie.",
+          "en": "A complaint is about the service, not about the defect itself. Through the tenant portal or by e-mail it automatically becomes a task at the housing association."
+        }
+      },
+      "corporatiefase": [
+        {
+          "medewerker": "anna",
+          "intro": {
+            "nl": "De klacht van de heer Mensah kwam per e-mail binnen. Ik zie al een taak in CRM staan.",
+            "en": "Mr Mensah's complaint came in by e-mail. I can already see a task in CRM."
+          },
+          "stappen": [
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Moet je de klacht nog zelf registreren?",
+                "en": "Do you still need to register the complaint yourself?"
+              },
+              "opties": [
+                "Nee, via portaal of e-mail staat er automatisch een taak in CRM",
+                "Ja, elke klacht registreer je met de hand",
+                "Ja, in Operations"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Portaal of e-mail: automatisch een taak in CRM. Anders registreer je hem handmatig.",
+                "en": "Portal or e-mail: automatically a task in CRM. Otherwise you register it manually."
+              },
+              "bron": "04",
+              "opties_en": [
+                "No, via portal or e-mail there's automatically a task in CRM",
+                "Yes, you register every complaint manually",
+                "Yes, in Operations"
+              ]
+            },
+            {
+              "type": "volgorde",
+              "vraag": {
+                "nl": "Zet de stappen van het afhandelen van een klacht in de goede volgorde.",
+                "en": "Put the steps for handling a complaint in the right order."
+              },
+              "items": [
+                "Registreren",
+                "Beoordelen",
+                "Vervolgacties",
+                "Controleren",
+                "Afsluiten"
+              ],
+              "uitleg": {
+                "nl": "Alle contactmomenten en acties komen in één dossier.",
+                "en": "All contact moments and actions go into one case file."
+              },
+              "bron": "04",
+              "items_en": [
+                "Register",
+                "Assess",
+                "Follow-up actions",
+                "Check",
+                "Close"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Je neemt de klacht in behandeling. Wat maak je aan?",
+                "en": "You take on the complaint. What do you create?"
+              },
+              "opties": [
+                "Een dossier 'Klachten' in CRM",
+                "Een onderhoudsorder",
+                "Een betalingsregeling"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Wel in behandeling: een dossier 'Klachten' in CRM, of een leefbaarheidsdossier KLACHT in Operations.",
+                "en": "When taken on: a 'Complaints' case file in CRM, or a liveability case of type COMPLAINT in Operations."
+              },
+              "bron": "04",
+              "opties_en": [
+                "A 'Complaints' case file in CRM",
+                "A maintenance order",
+                "A payment arrangement"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Hoe wijs je de vervolgacties toe?",
+                "en": "How do you assign the follow-up actions?"
+              },
+              "opties": [
+                "Sjabloon 'Klacht' via Processtappen toevoegen, datums checken, per actieregel een taak",
+                "Een e-mail sturen naar elke collega",
+                "Een notitie in het dossier zetten"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Met het sjabloon 'Klacht' krijgt elke actieregel een eigen taak.",
+                "en": "With the 'Complaint' template, every action line gets its own task."
+              },
+              "bron": "04",
+              "opties_en": [
+                "Add the 'Complaint' template via Process steps, check dates, one task per action line",
+                "Send an e-mail to every colleague",
+                "Put a note in the case file"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "De dakgoot is gemaakt. De heer Mensah vindt nog steeds dat hij te lang moest wachten. Je hebt al het redelijke gedaan. Wat nu?",
+                "en": "The gutter is fixed. Mr Mensah still feels he had to wait too long. You've done everything reasonable. What now?"
+              },
+              "opties": [
+                "Hem verwijzen naar een externe instantie, zoals de geschillencommissie waarbij de corporatie is aangesloten",
+                "Het dossier openlaten tot hij tevreden is",
+                "Nieuwe vervolgacties blijven toevoegen"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Niet tevreden en al het redelijke gedaan: verwijzen naar een externe instantie.",
+                "en": "Not satisfied and everything reasonable done: refer to an external body."
+              },
+              "bron": "04",
+              "opties_en": [
+                "Refer him to an external body, such as the disputes committee the housing association is affiliated with",
+                "Keep the case open until he's satisfied",
+                "Keep adding new follow-up actions"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Hoe sluit je het dossier in CRM af?",
+                "en": "How do you close the case file in CRM?"
+              },
+              "opties": [
+                "CRM sluit het dossier vanzelf",
+                "Je zet zelf de Dossierstatus op 'Voltooid' met een reden",
+                "Je verwijdert het dossier"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "CRM sluit het dossier vanzelf. In Operations zet je zelf de Dossierstatus op 'Voltooid' met een reden.",
+                "en": "CRM closes the case file automatically. In Operations you set the case status to 'Completed' yourself, with a reason."
+              },
+              "bron": "04",
+              "opties_en": [
+                "CRM closes the case file automatically",
+                "You set the case status to 'Completed' yourself, with a reason",
+                "You delete the case file"
+              ]
+            }
+          ]
+        }
+      ],
+      "afloop": {
+        "nl": "De dakgoot is gemaakt en de heer Mensah weet waar hij terechtkan. Hij knikt: 'Zo had het meteen moeten gaan.'",
+        "en": "The gutter is fixed and Mr Mensah knows where to go. He nods: 'That's how it should have gone from the start.'"
+      }
+    },
+    {
+      "id": "w3",
+      "adres": "Lindelaan 18",
+      "mvp": true,
+      "bron": [
+        "05 Sociaal beheer en omgevingsbeheer"
+      ],
+      "huurder": "hansen",
+      "titel": {
+        "nl": "Nachtlawaai en een donkere stalling",
+        "en": "Night-time noise and a dark bike shed"
+      },
+      "huurderfase": {
+        "deur": {
+          "nl": "Fijn dat je komt. De buren draaien elke nacht harde muziek. En de verlichting bij de fietsenstalling is al maanden kapot.",
+          "en": "Glad you came. The neighbours play loud music every night. And the lighting at the bike shed has been broken for months."
+        },
+        "hotspots": [
+          {
+            "id": "muur",
+            "object": "muur naar de buren",
+            "kern": true,
+            "tekst": {
+              "nl": "Je hoort een zware dreun door de muur.",
+              "en": "You hear a heavy thump through the wall."
+            },
+            "object_en": "wall to the neighbours"
+          },
+          {
+            "id": "raam",
+            "object": "raam aan de achterkant",
+            "kern": true,
+            "tekst": {
+              "nl": "De fietsenstalling is pikdonker. Eén lamp hangt scheef.",
+              "en": "The bike shed is pitch dark. One lamp is hanging crooked."
+            },
+            "object_en": "back window"
+          },
+          {
+            "id": "laptop",
+            "object": "laptop",
+            "kern": false,
+            "tekst": {
+              "nl": "Het huurdersportaal staat open.",
+              "en": "The tenant portal is open."
+            },
+            "object_en": "laptop"
+          }
+        ],
+        "dialoog": [
+          {
+            "vraag": {
+              "nl": "Waar meld ik die herrie?",
+              "en": "Where do I report that racket?"
+            },
+            "opties": [
+              {
+                "tekst": {
+                  "nl": "Doe een overlastmelding in het huurdersportaal.",
+                  "en": "Report a nuisance in the tenant portal."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Goed. Een melding via het huurdersportaal staat automatisch in CRM.",
+                  "en": "Good. A report through the tenant portal appears in CRM automatically."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Bel de corporatie.",
+                  "en": "Call the housing association."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Kan ook. Een telefonische melding registreert de medewerker zelf.",
+                  "en": "That works too. The employee registers a phone report themselves."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Daar kan de corporatie niets mee.",
+                  "en": "The housing association can't do anything about that."
+                },
+                "score": 0,
+                "feedback": {
+                  "nl": "Wel: burenoverlast valt onder sociaal beheer. De corporatie beoordeelt de melding.",
+                  "en": "It can: noise from neighbours falls under social management. The housing association assesses the report."
+                }
+              }
+            ]
+          },
+          {
+            "vraag": {
+              "nl": "En die lamp? Is dat ook iets voor de corporatie?",
+              "en": "And that lamp? Is that something for the housing association too?"
+            },
+            "opties": [
+              {
+                "tekst": {
+                  "nl": "Ja, dat gaat over de leefomgeving. De corporatie beoordeelt of ze het oppakt.",
+                  "en": "Yes, that's about the living environment. The housing association decides whether to take it on."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Klopt. Omgevingsbeheer gaat over straten, portieken en de buurt.",
+                  "en": "Right. Environment management is about streets, entrances and the neighbourhood."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Nee, dat moet je zelf regelen.",
+                  "en": "No, you have to sort that out yourself."
+                },
+                "score": 0,
+                "feedback": {
+                  "nl": "Omgevingsbeheer hoort bij de corporatie: zij beoordeelt of ze de verbetering oppakt.",
+                  "en": "Environment management belongs to the housing association: it decides whether to take on the improvement."
+                }
+              }
+            ]
+          }
+        ],
+        "leerpunt": {
+          "nl": "Overlast (sociaal beheer) en een betere buurt (omgevingsbeheer) zijn twee verschillende werkprocessen. Allebei krijgen ze een leefbaarheidsdossier.",
+          "en": "Nuisance (social management) and a better neighbourhood (environment management) are two different work processes. Both get a liveability case."
+        }
+      },
+      "corporatiefase": [
+        {
+          "medewerker": "tariq",
+          "intro": {
+            "nl": "Mevrouw Hansen meldde de geluidsoverlast via het huurdersportaal. De taak staat bij mijn team.",
+            "en": "Mrs Hansen reported the noise nuisance through the tenant portal. The task is with my team."
+          },
+          "stappen": [
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Moet je de melding nog registreren in CRM?",
+                "en": "Do you still need to register the report in CRM?"
+              },
+              "opties": [
+                "Nee, een melding via het huurdersportaal staat al automatisch in CRM",
+                "Ja, altijd handmatig",
+                "Ja, in Maintenance"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Alleen meldingen via het huurdersportaal of e-mail komen automatisch in CRM. Een telefonische melding registreer je zelf.",
+                "en": "Only reports through the tenant portal or e-mail appear in CRM automatically. You register a phone report yourself."
+              },
+              "bron": "05",
+              "opties_en": [
+                "No, a report through the tenant portal is already in CRM automatically",
+                "Yes, always manually",
+                "Yes, in Maintenance"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Stel dat je de melding níet in behandeling neemt. Wat doe je dan?",
+                "en": "Suppose you do not take on the report. What do you do then?"
+              },
+              "opties": [
+                "De melder informeren en eventueel verwijzen, bijvoorbeeld naar buurtbemiddeling of de politie",
+                "Niets, de taak sluit vanzelf",
+                "Een leefbaarheidsdossier aanmaken"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Verwijs als een andere organisatie het beter kan oppakken.",
+                "en": "Refer if another organisation is better placed to handle it."
+              },
+              "bron": "05",
+              "opties_en": [
+                "Inform the reporter and refer if needed, for example to neighbourhood mediation or the police",
+                "Nothing, the task closes automatically",
+                "Create a liveability case"
+              ]
+            },
+            {
+              "type": "systeem",
+              "vraag": {
+                "nl": "Je neemt de melding wél in behandeling. Waar maak je het leefbaarheidsdossier?",
+                "en": "You do take on the report. Where do you create the liveability case?"
+              },
+              "opties": [
+                "Zig365 | Operations",
+                "Zig365 | Customer (CRM)",
+                "Huurdersportaal"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Via de Klantkaart Operations (of de deeplink) naar het leefbaarheidsdossier in Operations.",
+                "en": "Via the Operations customer card (or the deep link) to the liveability case in Operations."
+              },
+              "bron": "05",
+              "opties_en": [
+                "Zig365 | Operations",
+                "Zig365 | Customer (CRM)",
+                "Tenant portal"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Welke rol heeft mevrouw Hansen in het dossier?",
+                "en": "What role does Mrs Hansen have in the case?"
+              },
+              "opties": [
+                "Melder",
+                "Veroorzaker",
+                "Contact"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Partijen in het dossier: Veroorzakers, Melders en Contacten, op huishoudniveau.",
+                "en": "Parties in the case: Causers, Reporters and Contacts, at household level."
+              },
+              "bron": "05",
+              "opties_en": [
+                "Reporter",
+                "Causer",
+                "Contact"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "De corporatie pakt de verlichting bij de fietsenstalling op. Wat maak je per actieregel aan?",
+                "en": "The housing association takes on the lighting at the bike shed. What do you create for each action line?"
+              },
+              "opties": [
+                "Een onderhoudsverzoek",
+                "Een klachtdossier",
+                "Een betalingsregeling"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Verbeteren leefomgeving: een dossier met eenheden, clusters of gebied, en per actieregel een onderhoudsverzoek.",
+                "en": "Improving the living environment: a case with units, clusters or area, and a maintenance request for each action line."
+              },
+              "bron": "05",
+              "opties_en": [
+                "A maintenance request",
+                "A complaint case file",
+                "A payment arrangement"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Wanneer sluit je een leefbaarheidsdossier af?",
+                "en": "When do you close a liveability case?"
+              },
+              "opties": [
+                "Als alle actieregels en taken 'Voltooid' zijn, met een afhandelingsreden",
+                "Zodra de melder belt dat het stil is",
+                "Na een vaste termijn van een maand"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Afsluiten: alles 'Voltooid', dan het dossier met een afhandelingsreden.",
+                "en": "Closing: everything 'Completed', then the case with a resolution reason."
+              },
+              "bron": "05",
+              "opties_en": [
+                "When all action lines and tasks are 'Completed', with a resolution reason",
+                "As soon as the reporter calls to say it's quiet",
+                "After a fixed period of one month"
+              ]
+            }
+          ]
+        }
+      ],
+      "afloop": {
+        "nl": "Het is weer stil 's nachts en de stalling is verlicht. Mevrouw Hansen zet haar fiets er met een gerust hart neer.",
+        "en": "It's quiet again at night and the bike shed is lit. Mrs Hansen parks her bike there with peace of mind."
+      }
+    },
+    {
+      "id": "w4",
+      "adres": "Lindelaan 20",
+      "mvp": true,
+      "bron": [
+        "03 Huurprijs"
+      ],
+      "huurder": "mulder",
+      "titel": {
+        "nl": "De berging die er niet meer is",
+        "en": "The storage shed that's gone"
+      },
+      "huurderfase": {
+        "deur": {
+          "nl": "Ik maak bezwaar tegen mijn huurverhoging. Mijn woning heeft geen berging meer, dus de punten kloppen niet.",
+          "en": "I object to my rent increase. My home no longer has a storage shed, so the points are wrong."
+        },
+        "hotspots": [
+          {
+            "id": "brief",
+            "object": "huurverhogingsbrief op tafel",
+            "kern": true,
+            "tekst": {
+              "nl": "De brief over de jaarlijkse huurverhoging per 1 juli.",
+              "en": "The letter about the annual rent increase as of 1 July."
+            },
+            "object_en": "rent increase letter on the table"
+          },
+          {
+            "id": "tuin",
+            "object": "achtertuin",
+            "kern": true,
+            "tekst": {
+              "nl": "Waar de berging stond, ligt nu alleen een betonplaat.",
+              "en": "Where the shed used to be, there's only a concrete slab."
+            },
+            "object_en": "back garden"
+          }
+        ],
+        "dialoog": [
+          {
+            "vraag": {
+              "nl": "Hoe maak ik bezwaar?",
+              "en": "How do I object?"
+            },
+            "opties": [
+              {
+                "tekst": {
+                  "nl": "Via het huurdersportaal of per e-mail. Dan komt er automatisch een taak bij de corporatie.",
+                  "en": "Through the tenant portal or by e-mail. Then a task is created automatically at the housing association."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Klopt. Een bezwaar komt binnen via Customer (CRM).",
+                  "en": "Right. An objection comes in through Customer (CRM)."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Gewoon de oude huur blijven betalen en verder niets zeggen.",
+                  "en": "Just keep paying the old rent and say nothing."
+                },
+                "score": 0,
+                "feedback": {
+                  "nl": "Zonder bezwaar weet de corporatie van niets. Wie de oude huur blijft betalen zonder bezwaar, krijgt een rappelbrief.",
+                  "en": "Without an objection, the housing association knows nothing. Anyone who keeps paying the old rent without objecting gets a reminder letter."
+                }
+              }
+            ]
+          }
+        ],
+        "leerpunt": {
+          "nl": "Een bezwaar tegen de huurverhoging komt binnen via CRM. De corporatie beoordeelt het en legt het vast in Operations.",
+          "en": "An objection to the rent increase comes in through CRM. The housing association assesses it and records it in Operations."
+        }
+      },
+      "corporatiefase": [
+        {
+          "medewerker": "wei",
+          "intro": {
+            "nl": "Er staat een taak in CRM: bezwaar huurverhoging van de heer Mulder.",
+            "en": "There's a task in CRM: rent increase objection from Mr Mulder."
+          },
+          "stappen": [
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Op welke grond maakt de heer Mulder bezwaar?",
+                "en": "On what grounds does Mr Mulder object?"
+              },
+              "opties": [
+                "Woningwaardering",
+                "Inkomensafhankelijk"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Er zijn twee gronden: woningwaardering of inkomensafhankelijk. Een berging die er niet meer is, raakt de punten van de woningwaardering.",
+                "en": "There are two grounds: property valuation or income-related. A shed that's no longer there affects the points of the property valuation."
+              },
+              "bron": "03",
+              "opties_en": [
+                "Property valuation",
+                "Income-related"
+              ]
+            },
+            {
+              "type": "systeem",
+              "vraag": {
+                "nl": "Na het beoordelen leg je het bezwaar vast. Waar?",
+                "en": "After assessing it, you record the objection. Where?"
+              },
+              "opties": [
+                "Zig365 | Operations",
+                "Zig365 | Customer (CRM)",
+                "Zig365 | Matching"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Registreren in CRM, beoordelen, dan vastleggen in Operations.",
+                "en": "Register in CRM, assess, then record in Operations."
+              },
+              "bron": "03",
+              "opties_en": [
+                "Zig365 | Operations",
+                "Zig365 | Customer (CRM)",
+                "Zig365 | Matching"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Welke status krijgt het bezwaar bij het vastleggen?",
+                "en": "What status does the objection get when you record it?"
+              },
+              "opties": [
+                "In afwachting",
+                "Voltooid",
+                "Gegund"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Je legt vast: Bezwaar huurverhoging, Ingangsdatum weigering, Betalingsbereid en status 'In afwachting'.",
+                "en": "You record: Rent increase objection, Refusal start date, Willing to pay and status 'Pending'."
+              },
+              "bron": "03",
+              "opties_en": [
+                "Pending",
+                "Completed",
+                "Awarded"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Het bezwaar is gegrond. Wat nu?",
+                "en": "The objection is upheld. What now?"
+              },
+              "opties": [
+                "De nieuwe huur berekenen en effectueren",
+                "De heer Mulder vragen het bezwaar in te trekken",
+                "Een rappelbrief sturen"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Gegrond: nieuwe huur berekenen en effectueren. Ongegrond: verzoek tot intrekken, zo nodig via de huurcommissie.",
+                "en": "Upheld: calculate and apply the new rent. Not upheld: request to withdraw, via the Rent Tribunal if needed."
+              },
+              "bron": "03",
+              "opties_en": [
+                "Calculate and apply the new rent",
+                "Ask Mr Mulder to withdraw the objection",
+                "Send a reminder letter"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Krijgt de heer Mulder in augustus een rappelbrief omdat hij de oude huur betaalt?",
+                "en": "Does Mr Mulder get a reminder letter in August because he pays the old rent?"
+              },
+              "opties": [
+                "Nee, niet bij een bezwaar",
+                "Ja, rappelleren is een wettelijke verplichting"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Je rappelleert niet bij een bezwaar of als de huur niet verhoogd is.",
+                "en": "You don't send reminders when there's an objection or when the rent wasn't increased."
+              },
+              "bron": "03",
+              "opties_en": [
+                "No, not when there's an objection",
+                "Yes, sending reminders is a legal obligation"
+              ]
+            }
+          ]
+        }
+      ],
+      "afloop": {
+        "nl": "De punten kloppen weer met de werkelijkheid. De heer Mulder zet de brief op de koelkast.",
+        "en": "The points match reality again. Mr Mulder puts the letter on the fridge."
+      }
+    },
+    {
+      "id": "w5",
+      "adres": "Lindelaan 22",
+      "mvp": true,
+      "bron": [
+        "14 Prolongatie en incasso",
+        "15 Debiteuren: facturen en betalingen"
+      ],
+      "huurder": "vandijk",
+      "titel": {
+        "nl": "Twee maanden achter",
+        "en": "Two months behind"
+      },
+      "huurderfase": {
+        "deur": {
+          "nl": "Kom binnen. Ik loop twee maanden achter met de huur. Ik wil het echt oplossen, maar in één keer lukt niet.",
+          "en": "Come in. I'm two months behind with the rent. I really want to sort it out, but I can't pay it all at once."
+        },
+        "hotspots": [
+          {
+            "id": "post",
+            "object": "stapel post",
+            "kern": true,
+            "tekst": {
+              "nl": "Twee aanmaningen van de corporatie. Openstaand: € 1.480.",
+              "en": "Two payment reminders from the housing association. Outstanding: € 1,480."
+            },
+            "object_en": "pile of post"
+          },
+          {
+            "id": "laptop",
+            "object": "laptop",
+            "kern": false,
+            "tekst": {
+              "nl": "Het huurdersportaal staat open.",
+              "en": "The tenant portal is open."
+            },
+            "object_en": "laptop"
+          }
+        ],
+        "dialoog": [
+          {
+            "vraag": {
+              "nl": "Kan ik het in delen betalen?",
+              "en": "Can I pay it in instalments?"
+            },
+            "opties": [
+              {
+                "tekst": {
+                  "nl": "Vraag een betalingsregeling aan, bijvoorbeeld via het huurdersportaal of bij de corporatie.",
+                  "en": "Ask for a payment arrangement, for example through the tenant portal or at the housing association."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Klopt. Een betalingsregeling kan worden aangemaakt via het portaal of in CRM.",
+                  "en": "Right. A payment arrangement can be created through the portal or in CRM."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Leg de brieven maar weg, dan gaat het vanzelf over.",
+                  "en": "Just put the letters away, it'll sort itself out."
+                },
+                "score": 0,
+                "feedback": {
+                  "nl": "Achterstanden worden automatisch gesignaleerd. Wie niet reageert, kan uiteindelijk bij de deurwaarder terechtkomen.",
+                  "en": "Arrears are flagged automatically. If you don't respond, it may end up with the bailiff."
+                }
+              }
+            ]
+          },
+          {
+            "vraag": {
+              "nl": "Ik wil dat het vanzelf van mijn rekening gaat.",
+              "en": "I want it to come off my account automatically."
+            },
+            "opties": [
+              {
+                "tekst": {
+                  "nl": "Dan heeft de corporatie een machtiging voor automatische incasso nodig.",
+                  "en": "Then the housing association needs a direct debit authorisation."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Precies. Voor automatische incasso is een mandaatcode nodig.",
+                  "en": "Exactly. Direct debit needs a mandate code."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Dat regelt de bank zelf.",
+                  "en": "The bank arranges that itself."
+                },
+                "score": 0,
+                "feedback": {
+                  "nl": "Zonder machtiging (mandaat) kan de corporatie niet automatisch incasseren.",
+                  "en": "Without an authorisation (mandate), the housing association can't collect by direct debit."
+                }
+              }
+            ]
+          }
+        ],
+        "leerpunt": {
+          "nl": "Een betalingsregeling kan via het huurdersportaal. Voor automatische incasso is een machtiging nodig.",
+          "en": "A payment arrangement can be made through the tenant portal. Direct debit requires an authorisation."
+        }
+      },
+      "corporatiefase": [
+        {
+          "medewerker": "amara",
+          "intro": {
+            "nl": "De heer Van Dijk wil de achterstand van € 1.480 in termijnen betalen, per automatische incasso. Er is nog geen machtiging.",
+            "en": "Mr Van Dijk wants to pay the € 1,480 arrears in instalments, by direct debit. There's no authorisation yet."
+          },
+          "stappen": [
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Wat heb je nodig voor automatische incasso?",
+                "en": "What do you need for direct debit?"
+              },
+              "opties": [
+                "Een mandaatcode",
+                "Een deurwaarderdossier",
+                "Een afwachtcode"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Automatische incasso: mandaatcode nodig.",
+                "en": "Direct debit: mandate code required."
+              },
+              "bron": "14",
+              "opties_en": [
+                "A mandate code",
+                "A bailiff case file",
+                "A hold code"
+              ]
+            },
+            {
+              "type": "volgorde",
+              "vraag": {
+                "nl": "Zet de stappen van een betalingsregeling in de goede volgorde.",
+                "en": "Put the steps of a payment arrangement in the right order."
+              },
+              "items": [
+                "Regeling aanmaken (status Aangemaakt)",
+                "Termijnvoorstel controleren",
+                "Activeren en brief versturen"
+              ],
+              "uitleg": {
+                "nl": "Status Aangemaakt → controleren → Activeren + brief, of verwijderen.",
+                "en": "Status Created → check → Activate + letter, or delete."
+              },
+              "bron": "14",
+              "items_en": [
+                "Create arrangement (status Created)",
+                "Check instalment proposal",
+                "Activate and send letter"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Wat bepaalt het segment van een debiteur?",
+                "en": "What determines a debtor's segment?"
+              },
+              "opties": [
+                "Het betaalgedrag; het segment bepaalt de aanmaningsconditie",
+                "De grootte van de woning",
+                "Het aantal bewoners"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Segment = groep op basis van betaalgedrag. Dat bepaalt de aanmaningsconditie.",
+                "en": "Segment = group based on payment behaviour. It determines the dunning condition."
+              },
+              "bron": "14",
+              "opties_en": [
+                "Payment behaviour; the segment determines the dunning condition",
+                "The size of the home",
+                "The number of residents"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "De regeling is volledig betaald. Wat doe je?",
+                "en": "The arrangement has been paid in full. What do you do?"
+              },
+              "opties": [
+                "De regeling beëindigen met een beëindigingscode (kan in bulk)",
+                "Niets, hij loopt gewoon door",
+                "Een nieuwe regeling aanmaken"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Volledig betaalde regelingen beëindig je, los of in bulk, met een beëindigingscode.",
+                "en": "You end fully paid arrangements, one by one or in bulk, with a termination code."
+              },
+              "bron": "15",
+              "opties_en": [
+                "End the arrangement with a termination code (can be done in bulk)",
+                "Nothing, it just keeps running",
+                "Create a new arrangement"
+              ]
+            }
+          ]
+        }
+      ],
+      "afloop": {
+        "nl": "De regeling loopt. De heer Van Dijk legt de aanmaningen in een map met 'afgehandeld' erop.",
+        "en": "The arrangement is running. Mr Van Dijk puts the reminders in a folder marked 'settled'."
+      }
+    },
+    {
+      "id": "w6",
+      "adres": "Lindelaan 24",
+      "mvp": true,
+      "bron": [
+        "06 Reparatieonderhoud",
+        "03 Huurprijs"
+      ],
+      "huurder": "volkov",
+      "titel": {
+        "nl": "Een tweede toilet",
+        "en": "A second toilet"
+      },
+      "huurderfase": {
+        "deur": {
+          "nl": "Ik wil graag een tweede toilet boven. Ik betaal daar wel iets meer huur voor.",
+          "en": "I'd like a second toilet upstairs. I don't mind paying a bit more rent for it."
+        },
+        "hotspots": [
+          {
+            "id": "overloop",
+            "object": "overloop boven",
+            "kern": true,
+            "tekst": {
+              "nl": "Een lege hoek op de overloop, naast de badkamer.",
+              "en": "An empty corner on the landing, next to the bathroom."
+            },
+            "object_en": "upstairs landing"
+          },
+          {
+            "id": "folder",
+            "object": "folder van een sanitairwinkel",
+            "kern": false,
+            "tekst": {
+              "nl": "Hij heeft al naar toiletten gekeken.",
+              "en": "He has already been looking at toilets."
+            },
+            "object_en": "bathroom shop leaflet"
+          }
+        ],
+        "dialoog": [
+          {
+            "vraag": {
+              "nl": "Laat ik het zelf plaatsen, of doet de corporatie het?",
+              "en": "Shall I install it myself, or does the housing association do it?"
+            },
+            "opties": [
+              {
+                "tekst": {
+                  "nl": "Vraag de corporatie om een geriefsverbetering: zij voeren het uit en jij betaalt een huurverhoging of eenmalige kosten.",
+                  "en": "Ask the housing association for a comfort improvement: they carry it out and you pay a rent increase or a one-off cost."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Klopt. Een geriefsverbetering is meer woongenot, op verzoek van de huurder.",
+                  "en": "Right. A comfort improvement means more living comfort, at the tenant's request."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Plaats het zelf, maar vraag eerst toestemming aan de corporatie.",
+                  "en": "Install it yourself, but ask the housing association for permission first."
+                },
+                "score": 1,
+                "feedback": {
+                  "nl": "Ook mogelijk: dat is een zelf aangebrachte voorziening (ZAV). De corporatie beoordeelt die volgens de richtlijnen.",
+                  "en": "Also possible: that's a tenant's own alteration (ZAV). The housing association assesses it according to its guidelines."
+                }
+              },
+              {
+                "tekst": {
+                  "nl": "Gewoon zelf doen, niemand hoeft het te weten.",
+                  "en": "Just do it yourself, nobody needs to know."
+                },
+                "score": 0,
+                "feedback": {
+                  "nl": "Een zelf aangebrachte voorziening beoordeelt de corporatie eerst. Bij akkoord gelden er voorwaarden.",
+                  "en": "The housing association first assesses a tenant's own alteration. If approved, conditions apply."
+                }
+              }
+            ]
+          }
+        ],
+        "leerpunt": {
+          "nl": "Geriefsverbetering: de corporatie voert uit, de huurder betaalt via de huur of eenmalig. ZAV: de huurder brengt het zelf aan, na beoordeling door de corporatie.",
+          "en": "Comfort improvement: the housing association carries it out, the tenant pays through the rent or once. ZAV: the tenant installs it themselves, after assessment by the housing association."
+        }
+      },
+      "corporatiefase": [
+        {
+          "medewerker": "fatima",
+          "intro": {
+            "nl": "De heer Volkov vraagt via het huurdersportaal om een tweede toilet boven.",
+            "en": "Mr Volkov asks through the tenant portal for a second toilet upstairs."
+          },
+          "stappen": [
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Is dit een geriefsverbetering of een WMO-aanpassing?",
+                "en": "Is this a comfort improvement or a Wmo adaptation?"
+              },
+              "opties": [
+                "Geriefsverbetering",
+                "WMO-aanpassing"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Geriefsverbetering = meer woongenot, op verzoek van de huurder. WMO valt erbuiten: die loopt via de gemeente.",
+                "en": "Comfort improvement = more living comfort, at the tenant's request. Wmo (Social Support Act) is outside this: it goes through the municipality."
+              },
+              "bron": "06",
+              "opties_en": [
+                "Comfort improvement",
+                "Wmo adaptation"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Je gaat akkoord. Welk onderhoudstype krijgt het onderhoudsverzoek?",
+                "en": "You agree. Which maintenance type does the maintenance request get?"
+              },
+              "opties": [
+                "Woningverbetering",
+                "Reparatieonderhoud",
+                "Planmatig onderhoud"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Onderhoudsverzoek met onderhoudstype Woningverbetering en taken uit een sjabloon.",
+                "en": "Maintenance request with maintenance type Home improvement and tasks from a template."
+              },
+              "bron": "06",
+              "opties_en": [
+                "Home improvement",
+                "Repair maintenance",
+                "Planned maintenance"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Wanneer maak je de order?",
+                "en": "When do you create the order?"
+              },
+              "opties": [
+                "Pas na akkoord van de huurder op de kosten",
+                "Meteen, de kosten volgen later",
+                "Als de huur al verhoogd is"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Pas na akkoord van de huurder de order. Daarna eventueel een tussentijdse huuraanpassing.",
+                "en": "Only after the tenant agrees to the costs do you create the order. Then, if needed, an interim rent adjustment."
+              },
+              "bron": "06",
+              "opties_en": [
+                "Only after the tenant agrees to the costs",
+                "Straight away, the costs follow later",
+                "When the rent has already been increased"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "De huur gaat omhoog voor het toilet. Wat ontstaat er altijd bij een tussentijdse huuraanpassing?",
+                "en": "The rent goes up for the toilet. What is always created with an interim rent adjustment?"
+              },
+              "opties": [
+                "Een nieuwe contractregel; daarna informeer je de klant",
+                "Een nieuwe huurovereenkomst",
+                "Een bezwaar"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Altijd ontstaat een nieuwe contractregel. Daarna informeer je de klant.",
+                "en": "A new contract line is always created. Then you inform the customer."
+              },
+              "bron": "03",
+              "opties_en": [
+                "A new contract line; then you inform the customer",
+                "A new tenancy agreement",
+                "An objection"
+              ]
+            }
+          ]
+        }
+      ],
+      "afloop": {
+        "nl": "Boven staat een nieuw toilet. De heer Volkov steekt zijn duim op vanaf de overloop.",
+        "en": "There's a new toilet upstairs. Mr Volkov gives a thumbs-up from the landing."
+      }
+    },
+    {
+      "id": "finale",
+      "adres": "Lindelaan 26",
+      "mvp": true,
+      "bron": [
+        "07 Vastgoedinspectie en registratie",
+        "01 Matching"
+      ],
+      "huurder": "yilmaz",
+      "titel": {
+        "nl": "Een nieuwe buur",
+        "en": "A new neighbour"
+      },
+      "huurderfase": null,
+      "intro": {
+        "nl": "Lindelaan 26 staat leeg: de vorige huurder heeft opgezegd. Jij zorgt dat er een nieuwe huurder in komt.",
+        "en": "Lindelaan 26 is empty: the previous tenant gave notice. You make sure a new tenant moves in."
+      },
+      "corporatiefase": [
+        {
+          "medewerker": "bram",
+          "intro": {
+            "nl": "De huurder van Lindelaan 26 heeft opgezegd. Volgende week doe ik de voorinspectie, over een maand de eindinspectie.",
+            "en": "The tenant of Lindelaan 26 has given notice. Next week I'll do the pre-inspection, in a month the final inspection."
+          },
+          "stappen": [
+            {
+              "type": "systeem",
+              "vraag": {
+                "nl": "Waarin doe je de voorinspectie?",
+                "en": "Where do you do the pre-inspection?"
+              },
+              "opties": [
+                "Zig365 | Maintenance, op de tablet",
+                "Zig365 | Operations",
+                "Zig365 | Customer (CRM)"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Operations ondersteunt de voor- en eindinspectie niet, Maintenance wel.",
+                "en": "Operations doesn't support the pre- and final inspection, Maintenance does."
+              },
+              "bron": "07",
+              "opties_en": [
+                "Zig365 | Maintenance, on the tablet",
+                "Zig365 | Operations",
+                "Zig365 | Customer (CRM)"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Wat controleer je als eerste bij de start van de voorinspectie?",
+                "en": "What do you check first when starting the pre-inspection?"
+              },
+              "opties": [
+                "Het agressie-icoon en de contactgegevens van de huurder",
+                "De woningwaardering",
+                "De meterstanden"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Eerst: agressie-icoon controleren en de contactgegevens van de huurder (e-mail!).",
+                "en": "First: check the aggression icon and the tenant's contact details (e-mail!)."
+              },
+              "bron": "07",
+              "opties_en": [
+                "The aggression icon and the tenant's contact details",
+                "The property valuation",
+                "The meter readings"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Bij de eindinspectie is de beschadigde deur niet gemaakt door de huurder. Wat nu?",
+                "en": "At the final inspection, the damaged door hasn't been repaired by the tenant. What now?"
+              },
+              "opties": [
+                "De verhuurder voert het uit, de huurder betaalt",
+                "De nieuwe huurder maakt het",
+                "Je laat het zo"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Niet uitgevoerd: de verhuurder voert uit, de huurder betaalt.",
+                "en": "Not carried out: the landlord carries it out, the tenant pays."
+              },
+              "bron": "07",
+              "opties_en": [
+                "The landlord carries it out, the tenant pays",
+                "The new tenant fixes it",
+                "You leave it as it is"
+              ]
+            }
+          ]
+        },
+        {
+          "medewerker": "sanne",
+          "intro": {
+            "nl": "De aanbiedhuur van Lindelaan 26 is bepaald. De woning kan de markt op.",
+            "en": "The advertised rent for Lindelaan 26 has been set. The home can go on the market."
+          },
+          "stappen": [
+            {
+              "type": "volgorde",
+              "vraag": {
+                "nl": "Zet de werkprocessen bij adverteren in de goede volgorde.",
+                "en": "Put the work processes for advertising in the right order."
+              },
+              "items": [
+                "Publiceren eenheid",
+                "Opstellen kandidatenlijst",
+                "Bepalen kandidaat",
+                "Verhuren en opleveren eenheid"
+              ],
+              "uitleg": {
+                "nl": "Eerst publiceren, dan de lijst, dan de kandidaat. Daarna begint het verhuren en opleveren.",
+                "en": "First publish, then the list, then the candidate. After that, letting and handover begin."
+              },
+              "bron": "01",
+              "items_en": [
+                "Publish unit",
+                "Draw up candidate list",
+                "Select candidate",
+                "Let and hand over unit"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Wat doen woningzoekenden zelf bij de kandidatenlijst?",
+                "en": "What do home seekers do themselves for the candidate list?"
+              },
+              "opties": [
+                "Alleen reageren; de rest gaat automatisch",
+                "De lijst definitief maken",
+                "Elkaar rangschikken"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Notificeren, reacties verwerken en definitief maken gaan automatisch. Alleen reageren doen woningzoekenden zelf.",
+                "en": "Notifying, processing responses and finalising happen automatically. Home seekers only respond themselves."
+              },
+              "bron": "01",
+              "opties_en": [
+                "Only respond; the rest happens automatically",
+                "Finalise the list",
+                "Rank each other"
+              ]
+            },
+            {
+              "type": "keuze",
+              "vraag": {
+                "nl": "Mevrouw Yilmaz accepteert de woning. Wat gebeurt er met haar gegevens?",
+                "en": "Mrs Yilmaz accepts the home. What happens to her details?"
+              },
+              "opties": [
+                "Die gaan automatisch naar Operations",
+                "Die typ je over in CRM",
+                "Die blijven alleen in Matching"
+              ],
+              "goed": 0,
+              "uitleg": {
+                "nl": "Geaccepteerd → gegevens gaan automatisch naar Operations. Daar koppel je het huishouden aan de juiste verhuuraanbieding.",
+                "en": "Accepted → details go to Operations automatically. There you link the household to the right letting offer."
+              },
+              "bron": "01",
+              "opties_en": [
+                "They go to Operations automatically",
+                "You retype them in CRM",
+                "They stay in Matching only"
+              ]
+            }
+          ]
+        }
+      ],
+      "afloop": {
+        "nl": "Mevrouw Yilmaz krijgt de sleutels van Lindelaan 26. De buren zwaaien. De straat is compleet.",
+        "en": "Mrs Yilmaz gets the keys to Lindelaan 26. The neighbours wave. The street is complete."
+      }
+    }
+  ],
+  "open_vragen": [
+    "Woning 5: mag de huurder 'Van Dam' uit e-learning 14 in het spel 'de heer Van Dijk' heten, met het vrije portret joost-van-dijk?",
+    "Woning 3: wat is precies het verschil tussen dossiertype OVERLIND en OVERLOMG? De e-learning noemt ze wel, maar legt ze niet uit. Daarom zit er nog geen vraag over in het spel.",
+    "Algemeen: willen we in de huurderfase laten zien hoe het huurdersportaal eruitziet (een gestileerde, fictieve versie), of alleen benoemen dat het bestaat?",
+    "Woning 1: is het goed om de huurder (perspectief van de huurder) te laten adviseren over kanalen, terwijl de e-learnings vanuit de corporatie geschreven zijn?",
+    "Engels: de vertaling gebruikt eigen termen (tenant portal, question tree, liveability case, repair request, maintenance order). Check of ze aansluiten bij de Engelse terminologie van Zig365."
+  ]
+}

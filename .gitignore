@@ -1,0 +1,11 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+tests/screenshots/
+.DS_Store
+# Safiro-licentie: fontbestanden nooit in het project
+*Safiro*
+tools/bron-assets/
+.claude/
+*.log
