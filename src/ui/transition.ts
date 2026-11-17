@@ -1,4 +1,5 @@
-import { t, getTaal } from '../i18n';
+import { titelPng } from '../i18n';
+import { t } from '../i18n';
 /** Overgangen: zachte fade en het blauwe perspectiefwissel-scherm. */
 const LOGO_DONKER = './assets/logo/ZIG_LOGO%20GROW4.png';
 const WISSEL_PNG = './assets/titels/overgang-ondertussen.png';
@@ -33,11 +34,11 @@ export class Transition {
       ${rol ? `<div class="rol"><img src="${rol.portret}" alt="" /><span>${t('jeBentNu')} <b></b><br /><small></small></span></div>` : ''}`;
     const h2 = this.wisselEl.querySelector('h2')!;
     h2.textContent = titel;
-    if (pngTitel && getTaal() === 'nl') {
+    if (pngTitel) {
       const img = this.wisselEl.querySelector<HTMLImageElement>('.wissel-titel')!;
       img.alt = titel;
       img.onload = () => { img.hidden = false; h2.hidden = true; };
-      img.src = WISSEL_PNG;
+      img.src = titelPng(WISSEL_PNG);
     }
     if (rol) {
       this.wisselEl.querySelector('.rol b')!.textContent = rol.naam;

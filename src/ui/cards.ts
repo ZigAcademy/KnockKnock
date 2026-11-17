@@ -1,5 +1,5 @@
 import { geluid } from '../audio/geluid';
-import { t, getTaal } from '../i18n';
+import { t, titelPng } from '../i18n';
 /**
  * Dialoogkaarten (HTML-overlay). Alle inhoudelijke teksten komen binnen als
  * parameter uit scenarios.json; hier staan alleen interfacelabels.
@@ -65,6 +65,25 @@ export class Cards {
     this.q('h2').textContent = titel;
     this.q('.card-body p').textContent = tekst;
     return this.knop(knop);
+  }
+
+  /** Kaart met een vraag en twee knoppen. Resolvet met true bij de eerste knop. */
+  keuze(titel: string, tekst: string, ja: string, nee: string): Promise<boolean> {
+    this.render('card--hotspot', `<h2 id="card-titel" class="hotspot-titel"></h2>`, `<p></p>`);
+    this.q('h2').textContent = titel;
+    this.q('.card-body p').textContent = tekst;
+    const acties = this.q('.card-acties');
+    acties.innerHTML = '';
+    const maak = (label: string, cls: string, id: string) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = cls; b.dataset.testid = id; b.textContent = label;
+      acties.appendChild(b);
+      return b;
+    };
+    const nb = maak(nee, 'btn btn--ghost', 'kaart-nee');
+    const jb = maak(ja, 'btn', 'kaart-ja');
+    jb.focus();
+    return new Promise((r) => { jb.onclick = () => r(true); nb.onclick = () => r(false); });
   }
 
   /** Popup bij een hotspot. */
@@ -134,7 +153,7 @@ export class Cards {
       `<p class="leerpunt-tekst"></p>${noot ? '<p class="noot"></p>' : ''}`);
     const img = this.q<HTMLImageElement>('.kop-img');
     img.onload = () => { img.hidden = false; this.q('h2').classList.add('sr-only'); };
-    if (getTaal() === 'nl') img.src = KOP_DIT_NEEM_JE_MEE;
+    img.src = titelPng(KOP_DIT_NEEM_JE_MEE);
     this.q('.leerpunt-tekst').textContent = tekst;
     if (noot) this.q('.noot').textContent = noot;
     geluid.speel('leerpunt', { vol: 0.45 });

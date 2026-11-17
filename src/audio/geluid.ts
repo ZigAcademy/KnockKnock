@@ -287,6 +287,59 @@ class Geluid {
     }
   }
 
+  // ------------------------------------------------------------------ voice-over
+
+  private stemBron: AudioBufferSourceNode | null = null;
+  private stemKlaar: (() => void) | null = null;
+  private stemCache = new Map<string, Promise<AudioBuffer | null>>();
+
+  /** Laad een stemfragment alvast (mp3, speelt in alle browsers). */
+  private stemBuffer(url: string): Promise<AudioBuffer | null> {
+    let p = this.stemCache.get(url);
+    if (!p && this.ctx) {
+      const c = this.ctx;
+      p = fetch(new URL(url, document.baseURI).href)
+        .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+        .then((b) => c.decodeAudioData(b))
+        .catch(() => null);
+      this.stemCache.set(url, p);
+    }
+    return p ?? Promise.resolve(null);
+  }
+
+  /**
+   * Speel een stemfragment af; de sfeer gaat zolang zachter (ducking).
+   * Resolvet als het klaar is, of meteen met false als het niet kan (geluid uit, geen bestand).
+   */
+  async spreek(url: string): Promise<boolean> {
+    if (!this.actief) return false;
+    const buf = await this.stemBuffer(url);
+    if (!buf || !this.actief) return false;
+    this.stopSpreken();
+    const c = this.ctx!;
+    const src = c.createBufferSource(); src.buffer = buf;
+    const g = c.createGain(); g.gain.value = 1.0;
+    src.connect(g).connect(this.master);
+    this.sfeerBus.gain.setTargetAtTime(0.25, c.currentTime, 0.15);
+    this.stemBron = src;
+    src.start();
+    return new Promise((r) => {
+      this.stemKlaar = () => { r(true); };
+      src.onended = () => {
+        if (this.stemBron === src) { this.stemBron = null; this.sfeerBus.gain.setTargetAtTime(0.8, c.currentTime, 0.3); }
+        const k = this.stemKlaar; this.stemKlaar = null; k?.();
+      };
+    });
+  }
+
+  stopSpreken(): void {
+    const s = this.stemBron;
+    if (!s) return;
+    this.stemBron = null;
+    try { s.stop(); } catch { /* al gestopt */ }
+    if (this.ctx) this.sfeerBus.gain.setTargetAtTime(0.8, this.ctx.currentTime, 0.3);
+  }
+
   stopBrabbel(): void {
     const g = this.brabbelGain;
     if (!g || !this.ctx) return;

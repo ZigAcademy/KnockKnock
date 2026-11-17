@@ -130,6 +130,16 @@ Leerinhoud, spelregels en flow zijn niet veranderd; de bestaande tests zijn onge
 - **Test:** `tests/engels.spec.ts` speelt woning 1 helemaal in het Engels. Alle 14 tests groen.
 - **Graag checken:** de Engelse vaktermen (zie `open_vragen`), de titel *Key takeaway* voor "Dit neem je mee", en de Engelse namen van rollen (bijv. *customer contact officer*, *property inspector*). De straatnaam (Lindelaan) en de adressen zijn niet vertaald.
 
+## Verbeteringen: voortgang, herkansing, achter de schermen, leven in de straat ✔
+1. **Voortgang in de browser:** zonder LMS (de link op GitHub Pages) wordt de voortgang in de browser bewaard (`knockknock-voortgang`, zelfde vorm als SCORM `suspend_data`). Met een LMS gaat alles via SCORM, zoals voorheen. Bij Instellingen staat dan **Opnieuw beginnen** (vraagt eerst om bevestiging).
+3. **Achter de schermen:** na de afloop van elke woning een scherm met de route van de vraag: huurder → de Zig365-onderdelen → de medewerker(s). Welke onderdelen er staan, wordt afgeleid uit de teksten van die woning in `scenarios.json` (goede antwoorden, vragen, uitleg en de bronnamen); de beschrijvingen komen letterlijk uit `producten` (nu ook in het Engels). Niets verzonnen. Met **voice-over** (Emma, edge-tts, NL/EN, 44 korte fragmenten in `public/assets/stem/ads/`, 1,8 MB) wordt de route voorgelezen en licht de stap op die aan de beurt is; de achtergrond gaat dan zachter. Volgt de knoppen voor geluid en voice-over.
+4. **Herkansing:** wie Zig365-vragen niet in één keer goed had, kan ze na de laatste vraag nog één keer oefenen ("Oefenen · telt niet mee"). De proceskennis verandert niet.
+7. **Leven bij geholpen woningen:** de huurder staat daarna in de voortuin en zwaait als je langsloopt. Nr 16: de dakgoot lekt zichtbaar tot de woning af is. Tegenover nr 18 hangt de lamp bij de fietsenstalling eerst scheef en uit, daarna recht en aan. Na de finale is nr 26 ingericht (ramen) en staat mevrouw Yilmaz in de tuin.
+8. **Busje van Huis & Haard / Hearth & Home:** wit busje met het logo op beide zijkanten (wisselt mee met de taal). Rijdt rondjes en stopt per rondje even bij één geholpen woning.
+12. **Safiro-titels:** `tools/render_titels.py` heeft nu alle koppen in NL en EN (overgang, "Dit neem je mee", "De straat is compleet!", "Achter de schermen"). Het spel pakt `naam.png` (NL) of `naam-en.png` (EN) als die bestaat. **Graag draaien op je Mac** (zie de uitleg bovenin het script).
+
+**Getest:** 27 Playwright-tests groen, waarvan 13 nieuw: de afleiding van de onderdelen per woning (7), voortgang herstellen en opnieuw beginnen, een gespeelde woning na herladen, herkansing + achter de schermen + voice-over (score blijft 5/7), achter de schermen op een telefoon met minder beweging en zonder voice-over (en de finale gaat open na woning 6), alle tuinen + busje dat rijdt en stopt na de finale, dakgoot en stallinglamp vóór en na. Elke test controleert dat er geen JavaScript-fouten zijn. Tijdens het testen gevonden en opgelost: het verborgen scherm "Achter de schermen" lag als donkere laag over het spel; de route paste niet in beeld bij zeven stappen; het busje stopte bij elke deur.
+
 ## Testen
 - `npm run dev` → spelen in de browser. Voeg `?fps` toe aan de URL voor een fps-teller.
 - `npm run build` en `npm test` (Playwright, screenshots in `tests/screenshots/`).

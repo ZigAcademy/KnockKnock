@@ -6,7 +6,7 @@ export interface Meta {
   corporatie: Tekst | string; straat: string; taal: string;
 }
 
-export interface Product { id: string; naam: string; kort: string; bron: string[] }
+export interface Product { id: string; naam: string; kort: string; naam_en?: string; kort_en?: string; bron: string[] }
 
 export interface Huurder { id: string; naam: string; naam_en?: string; voornaam?: string; portret: string; woning: string; noot?: string }
 export interface Medewerker { id: string; naam: string; rol: string; rol_en?: string; portret: string }

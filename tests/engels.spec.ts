@@ -77,8 +77,15 @@ test('English: house 1 from door to Zig365, with English texts', async ({ page }
     }
   }
   await expect(kaart).toContainText(w.afloop!.en!, { timeout: 15_000 });
-  await expect(page.getByTestId('kaart-knop')).toHaveText('Back to the street');
   await page.getByTestId('kaart-knop').click();
+  const ads = page.getByTestId('achter-de-schermen');
+  await expect(ads).toContainText('Behind the scenes');
+  await expect(ads).toContainText('Tenant portal');
+  await expect(ads).toContainText('Question tree');
+  await expect(page.getByTestId('ads-knop')).toHaveText('Back to the street');
+  await page.waitForTimeout(3800);
+  await page.screenshot({ path: `${SHOTS}/64-en-achter-de-schermen.png` });
+  await page.getByTestId('ads-knop').click();
   const prog = await page.evaluate(() => (window as unknown as { __wijkwijs: Hook }).__wijkwijs.progress());
   expect(prog.w1.proces).toEqual({ score: 7, max: 7 });
   expect(fouten).toEqual([]);

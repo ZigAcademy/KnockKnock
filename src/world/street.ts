@@ -43,6 +43,8 @@ export interface Street {
   spawn: THREE.Vector3;
   /** Grondhoogte (stoep ligt iets hoger dan de weg). */
   heightAt(x: number, z: number): number;
+  /** Nr 26 bewoond: de lege ramen krijgen een inrichting. */
+  bewoon26(): void;
 }
 
 const houseX = (i: number) => i * LAYOUT.houseWidth;
@@ -58,6 +60,7 @@ export function buildStreet(): Street {
   const [snA, snB] = LAYOUT.sidewalkNear, [rA, rB] = LAYOUT.road, [sfA, sfB] = LAYOUT.sidewalkFar;
   const off = LAYOUT.office;
   const ramen = new RaamBouwer();
+  const leegRamen: [number, RaamStijl][] = [];
 
   // ---------- Grond ----------
   const ground = new THREE.PlaneGeometry(220, 160);
@@ -127,7 +130,8 @@ export function buildStreet(): Street {
     const leeg = nummer === 26;
     const window = (wx: number, wy: number, ww: number, wh: number, stijl: RaamStijl, k: number) => {
       b.box(ww + 0.2, wh + 0.2, 0.06, wx, wy - 0.1, 0.03, WORLD.frame);
-      ramen.add({ pos: new THREE.Vector3(wx, wy, 0.062), breedte: ww, hoogte: wh, normaal: new THREE.Vector3(0, 0, 1), stijl: leeg ? RaamStijl.Leeg : stijl, seed: i * 7 + k * 3 + 1, borstwering: stijl === RaamStijl.Woon ? 0.9 : 0.85 });
+      const base = ramen.add({ pos: new THREE.Vector3(wx, wy, 0.062), breedte: ww, hoogte: wh, normaal: new THREE.Vector3(0, 0, 1), stijl: leeg ? RaamStijl.Leeg : stijl, seed: i * 7 + k * 3 + 1, borstwering: stijl === RaamStijl.Woon ? 0.9 : 0.85 });
+      if (leeg) leegRamen.push([base, stijl]);
       b.box(0.08, wh, 0.14, wx, wy, 0.07, WORLD.frame);
       b.box(ww + 0.3, 0.08, 0.25, wx, wy - 0.14, 0.12, WORLD.frame);
     };
@@ -338,7 +342,8 @@ export function buildStreet(): Street {
     gardenDepth: LAYOUT.gardenDepth, houseDepth: D, wallHeight: H,
   });
   group.add(b.build());
-  group.add(ramen.build());
+  const ramenMesh = ramen.build();
+  group.add(ramenMesh);
 
   const heightAt = (x: number, z: number): number => {
     if (x > off.minX - 5 && z > snA && z < sfB) return 0.08;
@@ -352,5 +357,6 @@ export function buildStreet(): Street {
     group, colliders, doors,
     spawn: new THREE.Vector3(LAYOUT.westEnd + 3, 0, (snA + snB) / 2),
     heightAt,
+    bewoon26: () => { for (const [b, st] of leegRamen) RaamBouwer.zetStijl(ramenMesh, b, st); },
   };
 }

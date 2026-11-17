@@ -16,6 +16,7 @@ export interface Zig365Context {
 const MODULES = ['Customer', 'Operations', 'Maintenance'];
 
 export class Zig365Scherm {
+  private oefen = false;
   private el: HTMLElement;
   private main!: HTMLElement;
   private keyHandler: ((e: KeyboardEvent) => void) | null = null;
@@ -68,9 +69,10 @@ export class Zig365Scherm {
   }
 
   /** Toont één stap. Resolvet met true als het bij de eerste poging goed was. */
-  stap(stap: Stap, nr: number, totaal: number, punten: number, laatste: boolean): Promise<boolean> {
+  stap(stap: Stap, nr: number, totaal: number, punten: number, laatste: boolean, oefen = false): Promise<boolean> {
+    this.oefen = oefen;
     this.main.innerHTML = `
-      <div class="z365-kop"><span class="z365-stapnr">${t('opdrachtVan', nr, totaal)}</span><span class="z365-punten" data-testid="proceskennis">${t('proceskennisPunten', punten)}</span></div>
+      <div class="z365-kop"><span class="z365-stapnr">${oefen ? t('oefenvraagVan', nr, totaal) : t('opdrachtVan', nr, totaal)}</span>${oefen ? `<span class="z365-punten z365-oefen" data-testid="oefenmodus">${t('telNietMee')}</span>` : `<span class="z365-punten" data-testid="proceskennis">${t('proceskennisPunten', punten)}</span>`}</div>
       <h2 class="z365-vraag" tabindex="-1"></h2>
       <div class="z365-stap"></div>
       <div class="z365-feedback" role="status"></div>
@@ -214,7 +216,7 @@ export class Zig365Scherm {
     acties.innerHTML = '';
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'btn'; b.dataset.testid = 'z365-volgende';
-    b.textContent = laatste ? t('afronden') : t('volgende');
+    b.textContent = laatste ? t(this.oefen ? 'klaarMetOefenen' : 'afronden') : t('volgende');
     acties.appendChild(b);
     b.focus();
     fb.scrollIntoView({ block: 'nearest' });

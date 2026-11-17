@@ -19,3 +19,6 @@ mono AAC-versie (`.m4a`, oudere Safari/iPad). De game kiest zelf.
 
 In code gemaakt (Web Audio, geen bestanden): deurbel, motor van de auto, gebrabbel (terugval als `praten.mp3` ontbreekt), dreun bij nr 18,
 druppende kraan, regen, gedempte muziek bij de buren, vogels, kantoorgeroezemoes, zoef bij de perspectiefwissel.
+
+## Voice-over
+`public/assets/stem/ads/*.mp3`: gemaakt met Microsoft Edge TTS (stem en-US-EmmaMultilingualNeural, NL en EN), uit de teksten van `producten`, de namen en rollen in `scenarios.json`.

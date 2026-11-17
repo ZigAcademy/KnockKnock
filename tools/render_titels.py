@@ -18,11 +18,16 @@ SCALE = 2  # retina
 
 TITELS = [
     # (bestandsnaam, tekst, grootte, tekstkleur)
-    ("titel-wijkwijs", "Wijkwijs", 120, NAVY),
-    ("titel-wijkwijs-wit", "Wijkwijs", 120, WHITE),
-    ("overgang-ondertussen", "Ondertussen bij Woonstichting Lindewaard ...", 56, WHITE),
+    # Het spel kiest per taal: <naam>.png (NL) of <naam>-en.png (EN). Ontbreekt een PNG,
+    # dan staat de kop in Poppins. Het titelscherm gebruikt het Knock Knock!-logo.
+    ("overgang-ondertussen", "Ondertussen bij Huis & Haard ...", 56, WHITE),
+    ("overgang-ondertussen-en", "Meanwhile at Hearth & Home ...", 56, WHITE),
     ("kop-dit-neem-je-mee", "Dit neem je mee", 48, NAVY),
+    ("kop-dit-neem-je-mee-en", "Key takeaway", 48, NAVY),
     ("kop-straat-compleet", "De straat is compleet!", 72, WHITE),
+    ("kop-straat-compleet-en", "The street is complete!", 72, WHITE),
+    ("kop-achter-de-schermen", "Achter de schermen", 48, NAVY),
+    ("kop-achter-de-schermen-en", "Behind the scenes", 48, NAVY),
 ]
 
 

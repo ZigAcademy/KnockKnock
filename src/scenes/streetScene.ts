@@ -1,3 +1,4 @@
+import { Geholpen } from '../world/geholpen';
 import * as THREE from 'three';
 import { buildStreet, HUISNUMMERS, type DoorInfo } from '../world/street';
 import { Markers } from '../world/markers';
@@ -5,7 +6,7 @@ import { Character } from '../player/character';
 import { PlayerController } from '../player/controller';
 import type { Input } from '../player/input';
 import { THEME, WORLD } from '../theme';
-import { SPELER_LOOK } from '../world/looks';
+import { SPELER_LOOK, HUURDER_LOOK } from '../world/looks';
 import { StraatLeven } from '../world/straatLeven';
 import { geluid, type Ondergrond } from '../audio/geluid';
 import { hits, type Collider } from '../world/collision';
@@ -32,6 +33,10 @@ export class StreetScene {
   private kantoorView = { pos: new THREE.Vector3(36, 3.2, 9), kijk: new THREE.Vector3(44, 3.4, 9) };
   private camGoal = { pos: new THREE.Vector3(), look: new THREE.Vector3(), lookNow: new THREE.Vector3() };
   private leven: StraatLeven;
+  private deurHuurder: string | null = null;
+  private geholpen: Geholpen;
+  private afWoningen = new Set<string>();
+  private huurderLook: (id: string) => Partial<Look>;
   private colliders: Collider[];
   /** Mag je bij deze woning aanbellen? (de finale pas als de rest af is) */
   beschikbaar: (w: Woning) => boolean = () => true;
@@ -87,8 +92,24 @@ export class StreetScene {
 
     this.colliders = street.colliders;
     this.leven = new StraatLeven(s, street.colliders);
+    this.geholpen = new Geholpen(s, street.colliders, street.doors, street.bewoon26);
+    this.huurderLook = (id) => HUURDER_LOOK[id] ?? {};
+    // het busje stopt even voor woningen die geholpen zijn
+    this.leven.busje.stopPlekken = () => [...this.afWoningen].map((id) => { const w = content.woningen.find((x) => x.id === id); const nr = w ? huisnummer(w.adres) : null; return nr !== null ? this.doors.get(nr)?.door.x ?? NaN : NaN; }).filter((x) => !Number.isNaN(x));
     character.onStap = (ren) => geluid.stap(this.ondergrond(this.player.position), ren ? 0.6 : 0.45);
   }
+
+  /** Woning is af: blauw vinkje en het verschil in de straat (huurder in de tuin, enz.). */
+  woningAf(w: Woning): void {
+    this.markers.setState(w.id, 'af');
+    this.afWoningen.add(w.id);
+    const nr = huisnummer(w.adres);
+    this.geholpen.af(w.id, w.huurder, this.huurderLook(w.huurder), nr !== null ? this.doors.get(nr) : undefined);
+    this.geholpen.verberg(this.deurScene ? this.deurHuurder : null);
+  }
+
+  /** Voor tests: hoeveel huurders staan er in hun voortuin? */
+  get huurdersInTuin(): number { return this.geholpen.aantalInTuin; }
 
   /** Uiterlijk van de speler aanpassen (na "Wie ben jij?"). */
   setSpelerLook(look: Partial<Look>): void { this.player.vervangFiguur(new Character(look)); }
@@ -167,6 +188,8 @@ export class StreetScene {
     let h = this.huurders.get(huurderId);
     if (!h) { h = new Character(look); h.root.name = `huurder-${huurderId}`; this.huurders.set(huurderId, h); this.scene.add(h.root); }
     h.setBasis('Idle');
+    this.deurHuurder = huurderId;
+    this.geholpen.verberg(huurderId);
     h.root.position.set(deur.door.x, 0.14, 0.32);
     h.root.rotation.y = 0;
     h.root.visible = false;
@@ -239,6 +262,7 @@ export class StreetScene {
     this.buren = [];
     if (this.sleutels) { this.sleutels.mesh.removeFromParent(); this.sleutels = null; }
     this.deurScene = null;
+    this.geholpen.verberg(null);
     this.camVast = false;
     this.markers.group.visible = true;
     this.player.syncCamera();
@@ -267,6 +291,7 @@ export class StreetScene {
   update(dt: number, t: number, reducedMotion: boolean): void {
     this.markers.update(t, reducedMotion);
     this.leven.update(dt, this.camera, this.player.position, reducedMotion);
+    this.geholpen.update(dt, this.player.position, this.camera, reducedMotion);
     const v = this.vlucht;
     if (v) {
       v.t = Math.min(1, v.t + dt / v.duur);

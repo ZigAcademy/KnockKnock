@@ -4,6 +4,7 @@ import { Character } from '../player/character';
 import { DECOR_LOOKS } from './looks';
 import { MODELLEN, kitMesh, demp } from '../assets/modellen';
 import { herkleurLak } from './paletten';
+import { woordmerkMateriaal, WOORDMERK_VERHOUDING } from './logos';
 import type { Collider } from './collision';
 import { geluid } from '../audio/geluid';
 
@@ -154,25 +155,49 @@ class RijdendeAuto {
   readonly collider: Collider;
   private s = 0;
   private v = 0;
+  private wacht = 0;
+  private gestoptBij = new Set<number>();
+  private doelX: number | null = null;
   private readonly lengte: number;
+  /** x-posities waar dit voertuig even stopt (westwaarts, aan de kant van de huizen). */
+  stopPlekken: () => number[] = () => [];
   // route: oostwaarts op z1, keren, westwaarts op z2, keren
   private readonly x0 = -10.5; private readonly x1 = 37.5;
   private readonly z1 = 9.85; private readonly z2 = 7.3;
   private readonly r = (9.85 - 7.3) / 2;
 
-  constructor(scene: THREE.Scene) {
-    const m = kitMesh('autos', 'hatchback', { w: 1.5 });
+  constructor(scene: THREE.Scene, opts: { model?: string; lak?: string; start?: number; logo?: boolean } = {}) {
+    const lak = opts.lak ?? '#6B7A8C';
+    this.s = opts.start ?? 0;
+    const m = kitMesh('autos', opts.model ?? 'hatchback', { w: opts.model === 'van' ? 1.7 : 1.5 });
     if (m) {
-      herkleurLak(m.geometry, '#6B7A8C');
+      herkleurLak(m.geometry, lak);
       this.mesh = m;
     } else {
       const g = new THREE.Group();
-      const mat = new THREE.MeshStandardMaterial({ color: '#6B7A8C', roughness: 0.7, flatShading: true });
+      const mat = new THREE.MeshStandardMaterial({ color: lak, roughness: 0.7, flatShading: true });
       const romp = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 2.8), mat); romp.position.y = 0.55;
       const dak = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.5, 1.5), mat); dak.position.set(0, 1.1, -0.2);
       g.add(romp, dak);
       g.traverse((o) => { o.castShadow = true; });
       this.mesh = g;
+    }
+    if (opts.logo) {
+      // logo van de corporatie op beide zijkanten (wisselt mee met de taal)
+      const b = new THREE.Box3().setFromObject(this.mesh);
+      const lengte = b.max.z - b.min.z, hoogte = b.max.y - b.min.y;
+      const lw = lengte * 0.62, lh = lw / WOORDMERK_VERHOUDING;
+      const groep = new THREE.Group();
+      for (const kant of [-1, 1]) {
+        const vlak = new THREE.Mesh(new THREE.PlaneGeometry(lw, lh), woordmerkMateriaal());
+        vlak.rotation.y = kant * Math.PI / 2;
+        vlak.position.set(kant * (b.max.x + 0.012), b.min.y + hoogte * 0.52, (b.min.z + b.max.z) / 2 - lengte * 0.06);
+        vlak.name = 'busje-logo';
+        groep.add(vlak);
+      }
+      const geheel = new THREE.Group();
+      geheel.add(this.mesh, groep);
+      this.mesh = geheel;
     }
     const box = new THREE.Box3().setFromObject(this.mesh);
     this.lengte = box.max.z - box.min.z;
@@ -199,15 +224,34 @@ class RijdendeAuto {
 
   get snelheid(): number { return this.v; }
 
-  update(dt: number, obstakels: THREE.Vector3[]): void {
+  get positie(): THREE.Vector3 { return this.pose(this.s).p; }
+  get richting(): THREE.Vector3 { return this.pose(this.s).d; }
+
+  /** obstakels: mensen; voertuigen tellen alleen als ze dezelfde kant op rijden (geen patstelling). */
+  update(dt: number, obstakels: THREE.Vector3[], voertuigen: RijdendeAuto[] = []): void {
     const { p, d } = this.pose(this.s);
     let doelV = 3.2;
-    for (const o of obstakels) {
+    const voor = (o: THREE.Vector3, ruimte: number) => {
       const rel = o.clone().sub(p).setY(0);
-      const voor = rel.dot(d);
-      const lat = Math.abs(rel.x * d.z - rel.z * d.x);
-      if (voor > -0.6 && voor < this.lengte / 2 + 5.5 && lat < 1.8) doelV = 0;
+      const v = rel.dot(d), lat = Math.abs(rel.x * d.z - rel.z * d.x);
+      return v > -0.6 && v < this.lengte / 2 + ruimte && lat < 1.8;
+    };
+    for (const o of obstakels) if (voor(o, 5.5)) doelV = 0;
+    for (const a of voertuigen) if (a !== this && a.richting.dot(d) > 0.3 && voor(a.positie, 4.5) && a.positie.clone().sub(p).dot(d) > 0) doelV = 0;
+    // even stoppen voor een geholpen woning (westwaarts rijden, langs de huizen)
+    const L = this.x1 - this.x0, boog = Math.PI * this.r;
+    const sm = ((this.s % this.totaal) + this.totaal) % this.totaal;
+    // per rondje één willekeurige geholpen woning (anders stopt het bij elke deur)
+    if (sm < L) this.gestoptBij.clear();
+    if (sm > L && sm < L + boog && this.doelX === null) {
+      const plekken = this.stopPlekken();
+      this.doelX = plekken.length ? plekken[Math.floor(Math.random() * plekken.length)] : NaN;
     }
+    if (sm > L + boog && sm < 2 * L + boog && this.doelX !== null && !Number.isNaN(this.doelX)) {
+      if (!this.gestoptBij.has(this.doelX) && Math.abs(p.x - this.doelX) < 0.3) { this.gestoptBij.add(this.doelX); this.wacht = 4; }
+    }
+    if (sm < L) this.doelX = null;
+    if (this.wacht > 0) { this.wacht -= dt; doelV = 0; }
     this.v += (doelV - this.v) * (1 - Math.exp(-dt * (doelV < this.v ? 4 : 1.2)));
     this.s += this.v * dt;
     const n = this.pose(this.s);
@@ -264,6 +308,8 @@ export class StraatLeven {
   private mensen: Voorbijganger[] = [];
   private hond: Hond | null = null;
   private auto: RijdendeAuto;
+  /** Busje van de corporatie (met logo): stopt even voor woningen die geholpen zijn. */
+  readonly busje: RijdendeAuto;
   private koepel: THREE.Mesh;
   private wolken: THREE.Mesh;
   private t = 0;
@@ -276,7 +322,9 @@ export class StraatLeven {
     for (const m of this.mensen) { scene.add(m.char.root); colliders.push(m.collider); }
     this.hond = new Hond(scene);
     this.auto = new RijdendeAuto(scene);
-    colliders.push(this.auto.collider);
+    this.busje = new RijdendeAuto(scene, { model: 'van', lak: '#EEF1F4', start: 62, logo: true });
+    this.busje.mesh.name = 'busje';
+    colliders.push(this.auto.collider, this.busje.collider);
     const l = maakLucht();
     this.koepel = l.koepel; this.wolken = l.wolken;
     scene.add(this.koepel, this.wolken);
@@ -285,7 +333,9 @@ export class StraatLeven {
   update(dt: number, camera: THREE.Camera, speler: THREE.Vector3, reducedMotion: boolean): void {
     for (const m of this.mensen) m.update(dt, speler);
     if (this.hond) this.hond.update(dt, this.mensen[1]);
-    this.auto.update(dt, [speler, ...this.mensen.map((m) => m.positie)]);
+    const mensen = [speler, ...this.mensen.map((m) => m.positie)];
+    this.auto.update(dt, mensen, [this.busje]);
+    this.busje.update(dt, mensen, [this.auto]);
     // motorgeluid: luider dichterbij, links/rechts ten opzichte van de camera
     const rel = this.auto.mesh.position.clone().sub(camera.position);
     const rechts = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);

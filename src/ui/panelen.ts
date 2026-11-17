@@ -1,4 +1,4 @@
-import { t, tx, getTaal } from '../i18n';
+import { t, tx, titelPng } from '../i18n';
 import type { Scenarios } from '../content/types';
 import type { Progress } from '../game/progress';
 import type { Settings } from '../game/settings';
@@ -40,6 +40,9 @@ class Paneel {
 export class InstellingenPaneel extends Paneel {
   /** Opent "Wie ben jij?" om je personage aan te passen. */
   onPersonage: (() => void) | null = null;
+  /** Voortgang staat in de browser (geen LMS): dan kun je opnieuw beginnen. */
+  lokaal = false;
+  onOpnieuw: (() => void) | null = null;
 
   constructor(root: HTMLElement, private settings: Settings) { super(root, 'paneel--instellingen', 'instellingen'); }
 
@@ -55,9 +58,18 @@ export class InstellingenPaneel extends Paneel {
           <select data-k="taal" data-testid="taal"><option value="nl" ${w.taal === 'nl' ? 'selected' : ''}>Nederlands</option><option value="en" ${w.taal === 'en' ? 'selected' : ''}>English</option></select>
         </label>
         <button type="button" class="btn btn--ghost" data-testid="personage-aanpassen" data-personage>${t('personageAanpassen')}</button>
+        ${this.lokaal ? `<button type="button" class="btn btn--ghost" data-testid="opnieuw" data-opnieuw>${t('opnieuwBeginnen')}</button><p class="paneel-noot">${t('voortgangBrowser')}</p>` : ''}
         <p class="paneel-noot">${t('noot')}</p>
         <div class="paneel-acties"><button type="button" class="btn" data-sluit>${t('klaar')}</button></div>
       </section>`);
+    // opnieuw beginnen: eerst bevestigen (tweede klik)
+    const opnieuw = this.el.querySelector<HTMLButtonElement>('[data-opnieuw]');
+    if (opnieuw) opnieuw.onclick = () => {
+      if (opnieuw.dataset.zeker) { this.onOpnieuw?.(); return; }
+      opnieuw.dataset.zeker = '1';
+      opnieuw.textContent = t('zekerWeten');
+      opnieuw.classList.add('btn--cta');
+    };
     this.el.querySelector<HTMLButtonElement>('[data-personage]')!.onclick = () => { this.sluit(); this.onPersonage?.(); };
     this.el.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((inp) => {
       inp.onchange = () => this.settings.zet(inp.dataset.k as 'geluid' | 'voiceOver' | 'minderBeweging', inp.checked);
@@ -110,12 +122,12 @@ export class Eindscherm extends Paneel {
         </div>
         <div class="paneel-acties"><button type="button" class="btn" data-sluit>${t('verderRondlopen')}</button></div>
       </section>`);
-    if (compleet && getTaal() === 'nl') {
+    if (compleet) {
       const img = this.el.querySelector<HTMLImageElement>('.eind-img')!;
       const h2 = this.el.querySelector('h2')!;
       img.alt = h2.textContent ?? '';
       img.onload = () => { img.hidden = false; h2.classList.add('sr-only'); };
-      img.src = KOP_COMPLEET;
+      img.src = titelPng(KOP_COMPLEET);
     }
   }
 }

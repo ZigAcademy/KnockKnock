@@ -70,8 +70,21 @@ const UI: Record<string, { nl: Waarde; en: Waarde }> = {
   minderBeweging: { nl: 'Minder beweging', en: 'Reduce motion' },
   taal: { nl: 'Taal', en: 'Language' },
   personageAanpassen: { nl: 'Personage aanpassen', en: 'Customise character' },
-  noot: { nl: 'Voice-over komt in een volgende versie; de knop bewaart je keuze alvast.', en: 'Voice-over will come in a later version; the button already saves your choice.' },
+  noot: { nl: 'Voice-over: je hoort hem bij \'Achter de schermen\' na elke woning.', en: "Voice-over: you'll hear it in 'Behind the scenes' after each house." },
   klaar: { nl: 'Klaar', en: 'Done' },
+  achterDeSchermen: { nl: 'Achter de schermen', en: 'Behind the scenes' },
+  achterIntro: { nl: 'Zo liep deze vraag van de huurder door Zig365 naar de medewerkers van de corporatie.', en: "This is how the tenant's request travelled through Zig365 to the housing association's staff." },
+  huurderRol: { nl: 'huurder', en: 'tenant' },
+  herkansingTitel: { nl: 'Nog even oefenen?', en: 'Practise a bit more?' },
+  herkansingTekst: { nl: (n, m) => `${n} van de ${m} vragen had je niet in één keer goed. Wil je die nog een keer proberen? Je score blijft gelijk.`, en: (n, m) => `You didn't get ${n} of the ${m} questions right first time. Want to try them again? Your score stays the same.` },
+  oefenen: { nl: 'Ja, oefenen', en: 'Yes, practise' },
+  overslaan: { nl: 'Nee, verder', en: 'No, continue' },
+  oefenvraagVan: { nl: (n, t) => `Oefenvraag ${n} van ${t}`, en: (n, t) => `Practice question ${n} of ${t}` },
+  telNietMee: { nl: 'Oefenen · telt niet mee', en: 'Practice · not scored' },
+  klaarMetOefenen: { nl: 'Klaar met oefenen', en: 'Done practising' },
+  opnieuwBeginnen: { nl: 'Opnieuw beginnen', en: 'Start over' },
+  zekerWeten: { nl: 'Zeker weten? Klik nog eens', en: 'Are you sure? Click again' },
+  voortgangBrowser: { nl: 'Je voortgang wordt in deze browser bewaard.', en: 'Your progress is saved in this browser.' },
   nogNiet: { nl: 'Nog niet geholpen', en: 'Not helped yet' },
   straatCompleet: { nl: 'De straat is compleet!', en: 'The street is complete!' },
   verderRondlopen: { nl: 'Verder rondlopen', en: 'Keep exploring' },
@@ -111,6 +124,9 @@ export function t(sleutel: keyof typeof UI | string, ...a: (string | number)[]):
   const w = UI[sleutel]?.[taal] ?? UI[sleutel]?.nl ?? sleutel;
   return typeof w === 'function' ? w(...a) : w;
 }
+
+/** Safiro-titel als PNG (tools/render_titels.py): NL = naam.png, EN = naam-en.png. */
+export const titelPng = (pad: string) => (taal === 'en' ? pad.replace(/\.png$/, '-en.png') : pad);
 
 /** Labels uit speler.ts (kleding, kapsels, kleuren) in het Engels. */
 export const LABEL_EN: Record<string, string> = {

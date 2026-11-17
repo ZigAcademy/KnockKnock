@@ -295,7 +295,7 @@ mis = []
 def walk(o, path):
     if isinstance(o, dict):
         if 'nl' in o and isinstance(o['nl'], str):
-            if path == '.meta.titel': return
+            if path.startswith('.meta'): return
             if path not in T: mis.append(path)
             else: o['en'] = T[path]
             return
@@ -313,6 +313,17 @@ for w in d['woningen']:
             if 'items' in s: s['items_en'] = [OPT[o] for o in s['items']]
 for h in d['personages']['huurders']: h['naam_en'] = NAAM[h['naam']]
 for m in d['personages']['medewerkers']: m['rol_en'] = ROL[m['rol']]
+PROD = {
+ 'huurdersportaal': ('Tenant portal', "Here the tenant arranges things themselves: submitting a repair request, filing a complaint or nuisance report, changing payment details and paying with iDEAL. A report through the portal appears in CRM automatically."),
+ 'customer': ('Zig365 | Customer (CRM)', "The customer contact system. Here you record contact moments, customer questions, repair requests (with the question tree), complaints and objections. With 'View as tenant' you see the tenant portal."),
+ 'operations': ('Zig365 | Operations', "The ERP for business operations: maintenance orders, rents, liveability cases, invoices, direct debit and the financial administration."),
+ 'maintenance': ('Zig365 | Maintenance', "Inspections on the tablet: the pre-inspection and final inspection when a tenancy ends."),
+ 'matching': ('Zig365 | Matching', "Here a vacant home is published and the candidate list is created. After acceptance, the details go to Operations automatically."),
+ 'leveranciersportaal': ('Supplier portal', "Here a supplier submits quotes, automatically receives orders once awarded and reports completion themselves."),
+ 'vraagboom': ('Question tree', "A questionnaire with a repair request that leads to the right repair template. If the question tree was used, the maintenance order is created automatically."),
+}
+for pr in d['producten']:
+    pr['naam_en'], pr['kort_en'] = PROD[pr['id']]
 d['meta']['titel'] = {'nl': 'Knock Knock!', 'en': 'Knock Knock!'}
 d['meta']['corporatie'] = {'nl': 'Huis & Haard (fictief)', 'en': 'Hearth & Home (fictional)'}
 d['meta']['taal'] = "NL en EN ingevuld. Teksten staan als {nl, en}; opties en volgordes van de corporatiefase in 'opties_en' / 'items_en'; hotspotnamen in 'object_en', namen in 'naam_en', rollen in 'rol_en'."

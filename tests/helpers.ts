@@ -11,6 +11,8 @@ export type Hook = {
   player: () => { x: number; z: number };
   drawCalls: () => number;
   scorm: () => boolean;
+  huurdersInTuin: () => number;
+  busje: () => { x: number; z: number };
   progress: () => Record<string, { huurder?: { score: number; max: number }; proces?: { score: number; max: number }; af: boolean }>;
 };
 
@@ -120,5 +122,13 @@ export async function speelCorporatiefase(page: Page, w: Woning, shot?: (naam: s
     await shot?.('afloop');
     await page.getByTestId('kaart-knop').click();
   }
+  // achter de schermen: de route van de vraag door Zig365
+  const ads = page.getByTestId('achter-de-schermen');
+  await expect(ads).toBeVisible({ timeout: 15_000 });
+  await expect(ads).toContainText('Achter de schermen');
+  await page.waitForTimeout(400);
+  await shot?.('achter-de-schermen');
+  await page.getByTestId('ads-knop').click();
+  await expect(ads).toBeHidden();
   await expect(kaart).toBeHidden();
 }

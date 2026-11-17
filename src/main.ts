@@ -1,3 +1,4 @@
+import { AchterDeSchermen } from './ui/achterschermen';
 import { t, tx, zetTaal, opTaal } from './i18n';
 import './style.css';
 import * as THREE from 'three';
@@ -74,7 +75,8 @@ async function start(): Promise<void> {
   const huurderfase = new HuurderFase({
     content, street, cards, ui, canvas: renderer.domElement, progress, transition, reducedMotion, setView,
   });
-  const corporatiefase = new CorporatieFase({ content, street, cards, zig, transition, progress, reducedMotion, setView });
+  const achter = new AchterDeSchermen(ui, reducedMotion, () => settings.waarden.voiceOver && settings.waarden.geluid);
+  const corporatiefase = new CorporatieFase({ content, street, cards, zig, transition, progress, reducedMotion, setView, achter });
 
   // HUD, panelen, SCORM
   const hud = new Hud(ui, settings);
@@ -98,7 +100,17 @@ async function start(): Promise<void> {
   const scorm = new Scorm();
   const bewaard = scorm.init();
   if (bewaard) progress.restore(bewaard);
-  for (const w of content.woningen) if (progress.isAf(w.id)) street.markers.setState(w.id, 'af');
+  // Zonder LMS (bijv. via de link op GitHub Pages) bewaren we de voortgang in de browser.
+  const LOKAAL = 'knockknock-voortgang';
+  if (!scorm.verbonden) {
+    try { const l = localStorage.getItem(LOKAAL); if (l) progress.restore(l); } catch { /* geen opslag */ }
+  }
+  instellingen.lokaal = !scorm.verbonden;
+  instellingen.onOpnieuw = () => {
+    try { localStorage.removeItem(LOKAAL); } catch { /* geen opslag */ }
+    location.reload();
+  };
+  for (const w of content.woningen) if (progress.isAf(w.id)) street.woningAf(w);
   const bijwerken = () => {
     const t = totalen(content, progress);
     hud.zet(t);
@@ -109,6 +121,7 @@ async function start(): Promise<void> {
       proces: t.proces, procesMax: t.procesMax,
       suspend: progress.serialize(),
     });
+    if (!scorm.verbonden) { try { localStorage.setItem(LOKAAL, progress.serialize()); } catch { /* geen opslag */ } }
   };
   // De finale (woning zonder huurderfase) komt pas als alle andere woningen af zijn
   const isFinale = (w: Woning) => !w.huurderfase;
@@ -187,6 +200,10 @@ async function start(): Promise<void> {
     drawCalls: () => renderer.info.render.calls,
     progress: () => Object.fromEntries(progress.woningen),
     scorm: () => scorm.verbonden,
+    huurdersInTuin: () => street.huurdersInTuin,
+    finaleOpen: () => finaleOpen(),
+    markering: (id: string) => { let r = { zichtbaar: false, af: false }; street.markers.group.traverse((o) => { if (o.name === `marker-${id}`) r = { zichtbaar: o.visible, af: ((o as THREE.Sprite).material as THREE.SpriteMaterial) !== street.markers.openMateriaal }; }); return r; },
+    busje: () => { let p = { x: 0, z: 0 }; street.scene.traverse((o) => { if (o.name === 'busje') p = { x: o.position.x, z: o.position.z }; }); return p; },
     modellen: MODELLEN,
     geluid,
     straat: street,

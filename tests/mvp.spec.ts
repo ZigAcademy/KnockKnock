@@ -87,6 +87,9 @@ test('alle woningen en de finale, eindscherm en SCORM', async ({ page }) => {
   expect(store['cmi.score.scaled']).toBe('1.0000');
   expect(store['cmi.score.max']).toBe(String(procesMax));
   expect(store['cmi.suspend_data'].length).toBeLessThan(4000);
+  // met een LMS gaat de voortgang via SCORM, niet via de browser
+  expect(await page.evaluate(() => localStorage.getItem('knockknock-voortgang'))).toBeNull();
+  expect(await page.evaluate(() => (window as unknown as { __wijkwijs: Hook }).__wijkwijs.huurdersInTuin())).toBe(7);
   const suspend = JSON.parse(store['cmi.suspend_data']);
   expect(Object.keys(suspend.w).sort()).toEqual(mvp.map((w) => w.id).sort());
 

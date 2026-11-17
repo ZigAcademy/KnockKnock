@@ -280,7 +280,8 @@ export class RaamBouwer {
   private P: number[] = []; private UV: number[] = []; private R: number[] = []; private N: number[] = [];
   private K: number[] = []; private M: number[] = []; private I: number[] = [];
 
-  add(o: RaamOpties): void {
+  /** Voegt een raam toe; geeft het index van het eerste hoekpunt (voor latere wijzigingen). */
+  add(o: RaamOpties): number {
     const n = o.normaal.clone().normalize();
     const right = new THREE.Vector3(0, 1, 0).cross(n).normalize(); // rechts voor wie naar het raam kijkt
     const base = this.P.length / 3;
@@ -293,6 +294,14 @@ export class RaamBouwer {
       this.M.push(o.breedte, o.hoogte);
     }
     this.I.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    return base;
+  }
+
+  /** Stijl van een raam veranderen na build() (bijv. een lege woning die bewoond raakt). */
+  static zetStijl(mesh: THREE.Mesh, base: number, stijl: RaamStijl): void {
+    const a = mesh.geometry.getAttribute('aKamer') as THREE.BufferAttribute;
+    for (let k = 0; k < 4; k++) a.setY(base + k, stijl);
+    a.needsUpdate = true;
   }
 
   build(): THREE.Mesh {

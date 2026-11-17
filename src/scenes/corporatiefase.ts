@@ -1,4 +1,7 @@
-import { t, tx, huurderNaam, corporatieNaam, rolVan as rolTekst } from '../i18n';
+import { onderdelenVan } from '../game/achterDeSchermen';
+import type { AchterDeSchermen } from '../ui/achterschermen';
+import type { Stap } from '../content/types';
+import { t, tx, huurderNaam, corporatieNaam, rolVan as rolTekst, getTaal } from '../i18n';
 import type { Look } from '../player/character';
 import type { Scenarios, Woning } from '../content/types';
 import { huurderVan, portretUrl } from '../content/load';
@@ -14,6 +17,7 @@ import type { Progress } from '../game/progress';
 import type { View } from './huurderfase';
 
 interface Ctx {
+  achter: AchterDeSchermen;
   content: Scenarios;
   street: StreetScene;
   cards: Cards;
@@ -68,6 +72,8 @@ export class CorporatieFase {
     let goed = 0;
     const max = delen.reduce((s, d) => s + d.stappen.length, 0);
     let nr = 0;
+    /** Vragen die niet in één keer goed waren: na afloop nog één keer oefenen (telt niet mee). */
+    const gemist: { stap: Stap; m: string }[] = [];
     for (const [i, deel] of delen.entries()) {
       const m = medewerker(deel.medewerker);
       if (i > 0) await tr.fade(true);
@@ -84,8 +90,26 @@ export class CorporatieFase {
       for (const stap of deel.stappen) {
         nr++;
         if (await zig.stap(stap, nr, max, goed, nr === max)) goed++;
+        else gemist.push({ stap, m: m.id });
       }
+      if (i < delen.length - 1 || !gemist.length) zig.sluit();
+    }
+
+    // 2b. Herkansing: oefenen met de gemiste vragen (de score blijft gelijk)
+    if (gemist.length) {
       zig.sluit();
+      const oefenen = await cards.keuze(t('herkansingTitel'), t('herkansingTekst', gemist.length, max), t('oefenen'), t('overslaan'));
+      cards.hide();
+      if (oefenen) {
+        for (const [k, g] of gemist.entries()) {
+          if (k === 0 || g.m !== gemist[k - 1].m) {
+            office.setMedewerker(g.m);
+            zig.toon({ medewerker: rolVan(g.m), huurder: { naam: huurderNaam(huurder), adres: woning.adres }, titel: tx(woning.titel) });
+          }
+          await zig.stap(g.stap, k + 1, gemist.length, 0, k === gemist.length - 1, true);
+          if (k === gemist.length - 1 || gemist[k + 1].m !== g.m) zig.sluit();
+        }
+      }
     }
 
     // 3. Afloop bij de huurder
@@ -97,15 +121,29 @@ export class CorporatieFase {
     await tr.fade(false);
     await deurOpen;
     progress.procesKlaar(woning.id, { score: goed, max });
-    street.markers.setState(woning.id, 'af');
+    street.woningAf(woning);
     if (finale) {
       street.burenZwaaien(finale.buren, deur, rm);
       await street.geefSleutels(deur);
     }
     if (woning.afloop) {
       if (!finale) street.zwaai(woning.huurder);
-      await cards.deur(spreker, tx(woning.afloop), t('terugStraat'));
+      await cards.deur(spreker, tx(woning.afloop), t('verder'));
       cards.hide();
+    }
+    // 4. Achter de schermen: de route van de vraag door Zig365 (uit de teksten van deze casus)
+    const onderdelen = onderdelenVan(woning, content.producten);
+    if (onderdelen.length) {
+      const ids = [...new Set(delen.map((d) => d.medewerker))];
+      await this.ctx.achter.toon(
+        { naam: huurderNaam(huurder) || woning.adres, rol: t('huurderRol'), portret: huurder ? portretUrl(huurder.portret) : undefined },
+        onderdelen,
+        ids.map((id) => { const m = medewerker(id); return { naam: m.naam, rol: rolTekst(m), portret: portretUrl(m.portret) }; }),
+        t('terugStraat'),
+        (() => {
+          const st = (n: string) => `assets/stem/ads/${getTaal()}-${n}.mp3`;
+          return { intro: st('intro'), stappen: [st(`h-${woning.huurder}`), ...onderdelen.map((p) => st(`p-${p.id}`)), ...ids.map((id) => st(`m-${id}`))] };
+        })());
     }
     street.sluitDeur();
     street.player.setPose(deur.stand.clone().setZ(deur.stand.z + 0.4), 0);

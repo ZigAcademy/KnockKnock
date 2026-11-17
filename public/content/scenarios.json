@@ -26,7 +26,9 @@
         "05",
         "06",
         "15"
-      ]
+      ],
+      "naam_en": "Tenant portal",
+      "kort_en": "Here the tenant arranges things themselves: submitting a repair request, filing a complaint or nuisance report, changing payment details and paying with iDEAL. A report through the portal appears in CRM automatically."
     },
     {
       "id": "customer",
@@ -37,7 +39,9 @@
         "03",
         "04",
         "05"
-      ]
+      ],
+      "naam_en": "Zig365 | Customer (CRM)",
+      "kort_en": "The customer contact system. Here you record contact moments, customer questions, repair requests (with the question tree), complaints and objections. With 'View as tenant' you see the tenant portal."
     },
     {
       "id": "operations",
@@ -49,7 +53,9 @@
         "06",
         "14",
         "15"
-      ]
+      ],
+      "naam_en": "Zig365 | Operations",
+      "kort_en": "The ERP for business operations: maintenance orders, rents, liveability cases, invoices, direct debit and the financial administration."
     },
     {
       "id": "maintenance",
@@ -57,7 +63,9 @@
       "kort": "Opnames op de tablet: de voorinspectie en eindinspectie bij een huuropzegging.",
       "bron": [
         "07"
-      ]
+      ],
+      "naam_en": "Zig365 | Maintenance",
+      "kort_en": "Inspections on the tablet: the pre-inspection and final inspection when a tenancy ends."
     },
     {
       "id": "matching",
@@ -65,7 +73,9 @@
       "kort": "Hier wordt een vrije woning gepubliceerd en komt de kandidatenlijst tot stand. Na acceptatie gaan de gegevens automatisch naar Operations.",
       "bron": [
         "01"
-      ]
+      ],
+      "naam_en": "Zig365 | Matching",
+      "kort_en": "Here a vacant home is published and the candidate list is created. After acceptance, the details go to Operations automatically."
     },
     {
       "id": "leveranciersportaal",
@@ -74,7 +84,9 @@
       "bron": [
         "06",
         "08"
-      ]
+      ],
+      "naam_en": "Supplier portal",
+      "kort_en": "Here a supplier submits quotes, automatically receives orders once awarded and reports completion themselves."
     },
     {
       "id": "vraagboom",
@@ -83,7 +95,9 @@
       "bron": [
         "02",
         "06"
-      ]
+      ],
+      "naam_en": "Question tree",
+      "kort_en": "A questionnaire with a repair request that leads to the right repair template. If the question tree was used, the maintenance order is created automatically."
     }
   ],
   "personages": {

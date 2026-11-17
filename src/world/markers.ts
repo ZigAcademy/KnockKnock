@@ -8,6 +8,7 @@ export class Markers {
   readonly group = new THREE.Group();
   private items = new Map<string, { sprite: THREE.Sprite; baseY: number; phase: number }>();
   private openMat: THREE.SpriteMaterial;
+  get openMateriaal(): THREE.SpriteMaterial { return this.openMat; }
   private doneMat: THREE.SpriteMaterial;
 
   constructor() {
