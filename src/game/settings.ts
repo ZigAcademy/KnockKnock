@@ -5,10 +5,12 @@ export interface Instellingen {
   /** null = volg de systeeminstelling (prefers-reduced-motion). */
   minderBeweging: boolean | null;
   taal: 'nl' | 'en';
+  /** Beeldkwaliteit: auto zakt naar laag als de framerate te laag is. */
+  kwaliteit: 'auto' | 'hoog' | 'laag';
 }
 
 const KEY = 'wijkwijs-instellingen';
-const STANDAARD: Instellingen = { geluid: true, voiceOver: true, minderBeweging: null, taal: 'nl' };
+const STANDAARD: Instellingen = { geluid: true, voiceOver: true, minderBeweging: null, taal: 'nl', kwaliteit: 'auto' };
 
 export class Settings {
   waarden: Instellingen;

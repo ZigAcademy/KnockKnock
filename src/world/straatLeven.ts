@@ -336,6 +336,8 @@ export class StraatLeven {
   readonly busje: RijdendeAuto;
   private koepel: THREE.Mesh;
   private wolken: THREE.Mesh;
+  /** HDRI-lucht geladen: getekende koepel en wolken uit. */
+  echteLucht(): void { this.koepel.visible = false; this.wolken.visible = false; }
   private t = 0;
 
   constructor(scene: THREE.Scene, colliders: Collider[]) {
@@ -355,7 +357,11 @@ export class StraatLeven {
   }
 
   update(dt: number, camera: THREE.Camera, speler: THREE.Vector3, reducedMotion: boolean): void {
-    for (const m of this.mensen) m.update(dt, speler);
+    for (const m of this.mensen) {
+      m.update(dt, speler);
+      // even naar de speler kijken als die vlakbij staat
+      m.char.kijkNaar = m.positie.distanceTo(speler) < 3.5 ? speler.clone().setY(speler.y + 1.6) : null;
+    }
     if (this.hond) this.hond.update(dt, this.mensen[1]);
     const mensen = [speler, ...this.mensen.map((m) => m.positie)];
     this.auto.update(dt, mensen, [this.busje]);

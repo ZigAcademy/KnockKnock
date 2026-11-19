@@ -11,6 +11,8 @@
     "scorm": "npm run build && node scripts/scorm.mjs"
   },
   "dependencies": {
+    "n8ao": "^2.1.0",
+    "postprocessing": "^6.39.6",
     "three": "^0.187.0"
   },
   "devDependencies": {

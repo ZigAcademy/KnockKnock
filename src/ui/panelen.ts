@@ -57,6 +57,9 @@ export class InstellingenPaneel extends Paneel {
         <label class="kies"><span>${t('taal')}</span>
           <select data-k="taal" data-testid="taal"><option value="nl" ${w.taal === 'nl' ? 'selected' : ''}>Nederlands</option><option value="en" ${w.taal === 'en' ? 'selected' : ''}>English</option></select>
         </label>
+        <label class="kies"><span>${t('beeldkwaliteit')}</span>
+          <select data-k="kwaliteit" data-testid="kwaliteit"><option value="auto" ${w.kwaliteit === 'auto' ? 'selected' : ''}>${t('kwaliteitAuto')}</option><option value="hoog" ${w.kwaliteit === 'hoog' ? 'selected' : ''}>${t('kwaliteitHoog')}</option><option value="laag" ${w.kwaliteit === 'laag' ? 'selected' : ''}>${t('kwaliteitLaag')}</option></select>
+        </label>
         <button type="button" class="btn btn--ghost" data-testid="personage-aanpassen" data-personage>${t('personageAanpassen')}</button>
         ${this.lokaal ? `<button type="button" class="btn btn--ghost" data-testid="opnieuw" data-opnieuw>${t('opnieuwBeginnen')}</button><p class="paneel-noot">${t('voortgangBrowser')}</p>` : ''}
         <p class="paneel-noot">${t('noot')}</p>
@@ -74,6 +77,7 @@ export class InstellingenPaneel extends Paneel {
     this.el.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((inp) => {
       inp.onchange = () => this.settings.zet(inp.dataset.k as 'geluid' | 'voiceOver' | 'minderBeweging', inp.checked);
     });
+    this.el.querySelector<HTMLSelectElement>('select[data-k="kwaliteit"]')!.onchange = (e) => this.settings.zet('kwaliteit', (e.target as HTMLSelectElement).value as 'auto' | 'hoog' | 'laag');
     // taal wisselen: direct toepassen en het paneel in de nieuwe taal opnieuw tonen
     this.el.querySelector<HTMLSelectElement>('select[data-k="taal"]')!.onchange = (e) => {
       this.settings.zet('taal', (e.target as HTMLSelectElement).value as 'nl' | 'en');

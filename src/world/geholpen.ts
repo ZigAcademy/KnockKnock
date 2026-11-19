@@ -107,6 +107,7 @@ export class Geholpen {
       diff = Math.atan2(Math.sin(diff), Math.cos(diff));
       r.rotation.y += diff * (1 - Math.exp(-dt * 4));
       if (afstand < 5 && this.t > h.wachtTot) { void h.char.speel('Wave'); h.wachtTot = this.t + 9; }
+      h.char.kijkNaar = afstand < 9 ? speler.clone().setY(speler.y + 1.6) : null;
       h.char.animate(dt, 0);
     }
   }

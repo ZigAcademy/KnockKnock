@@ -1,3 +1,4 @@
+import { Beeld } from './render/beeld';
 import { AchterDeSchermen } from './ui/achterschermen';
 import { t, tx, zetTaal, opTaal } from './i18n';
 import './style.css';
@@ -50,6 +51,7 @@ async function start(): Promise<void> {
   renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.domElement.tabIndex = 0;
+  const beeld = new Beeld(renderer);
   renderer.domElement.setAttribute('aria-label', `${content.meta.straat}`);
   app.appendChild(renderer.domElement);
 
@@ -65,6 +67,7 @@ async function start(): Promise<void> {
   ui.addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('button')) geluid.speel('klik', { vol: 0.3 }); });
 
   const street = new StreetScene(content, input, reducedMotion);
+  street.onRenderer(renderer);
   const cards = new Cards(ui);
   const progress = new Progress();
   let view: View | null = null;
@@ -81,6 +84,8 @@ async function start(): Promise<void> {
   const corporatiefase = new CorporatieFase({ content, street, cards, zig, transition, progress, reducedMotion, setView, achter });
 
   // HUD, panelen, SCORM
+  beeld.zetKwaliteit(settings.waarden.kwaliteit);
+  settings.onChange(() => { if (settings.waarden.kwaliteit !== beeld.keuze) beeld.zetKwaliteit(settings.waarden.kwaliteit); });
   const hud = new Hud(ui, settings);
   // taalwissel: vaste labels direct bijwerken; kaarten en Zig365 volgen bij het volgende scherm
   settings.onChange(() => zetTaal(settings.waarden.taal));
@@ -189,6 +194,7 @@ async function start(): Promise<void> {
 
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
+    beeld.setSize(window.innerWidth, window.innerHeight);
     street.resize(window.innerWidth, window.innerHeight);
     huurderfase.resize(window.innerWidth, window.innerHeight);
     corporatiefase.resize(window.innerWidth, window.innerHeight);
@@ -200,6 +206,8 @@ async function start(): Promise<void> {
     standPoint: (nr: number) => { const d = street.doors.get(nr); return d ? street.player.project(d.stand) : null; },
     player: () => ({ x: street.player.position.x, z: street.player.position.z }),
     drawCalls: () => renderer.info.render.calls,
+    beeldModus: () => beeld.modus,
+    beeld,
     progress: () => Object.fromEntries(progress.woningen),
     scorm: () => scorm.verbonden,
     huurdersInTuin: () => street.huurdersInTuin,
@@ -249,12 +257,12 @@ async function start(): Promise<void> {
       street.update(dt, t, reducedMotion());
       const hier = !bezig && !overlay.meldingOpen && !panelOpen() ? street.deurInRange() : null;
       overlay.showPrompt(hier ? hier.woning.adres : null);
-      renderer.render(street.scene, street.camera);
+      beeld.render(street.scene, street.camera, dt);
     } else {
       overlay.showPrompt(null);
       huurderfase.update(dt, t);
       corporatiefase.update(dt);
-      renderer.render(view.scene, view.camera);
+      beeld.render(view.scene, view.camera, dt);
     }
     fpsAcc += timer.getDelta(); fpsFrames++;
     if (fpsAcc > 0.5) { overlay.setFps(fpsFrames / fpsAcc); fpsAcc = 0; fpsFrames = 0; }

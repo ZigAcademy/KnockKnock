@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { detailVoorKleur, metDetail } from '../render/detail';
 import { bakGeometrie, geplaatsteMaat, kitModel, plaatsMatrix, type KitNaam, type Palet, type Plaatsing } from '../assets/modellen';
 
 /**
@@ -11,6 +12,9 @@ export class StaticBuilder {
   private receivers: THREE.BufferGeometry[] = [];
   private tmpColor = new THREE.Color();
 
+  /** buiten: wind in bomen en planten, wolkenschaduw (alleen voor de straat). */
+  constructor(private opties: { buiten?: boolean } = {}) {}
+
   add(geom: THREE.BufferGeometry, color: string, opts: { castShadow?: boolean } = {}): void {
     let g = geom.index ? geom.toNonIndexed() : geom;
     if (g !== geom) geom.dispose();
@@ -20,6 +24,8 @@ export class StaticBuilder {
     const arr = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) { arr[i * 3] = c.r; arr[i * 3 + 1] = c.g; arr[i * 3 + 2] = c.b; }
     g.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+    const det = detailVoorKleur(color);
+    if (det) g.setAttribute('aDetail', new THREE.BufferAttribute(new Float32Array(n).fill(det), 1));
     (opts.castShadow === false ? this.receivers : this.casters).push(g);
   }
 
@@ -38,7 +44,19 @@ export class StaticBuilder {
   model(kit: KitNaam, naam: string, p: Plaatsing, palet?: Palet, opts: { castShadow?: boolean; nabewerk?: (g: THREE.BufferGeometry) => void } = {}): THREE.Vector3 | null {
     const o = kitModel(kit, naam);
     if (!o) return null;
-    for (const g of bakGeometrie(o, plaatsMatrix(o, p), palet)) {
+    const geos = bakGeometrie(o, plaatsMatrix(o, p), palet);
+    // natuur wiegt in de wind: hoe hoger in het model, hoe meer (de voet staat stil)
+    if (kit === 'natuur' && this.opties.buiten) {
+      let y0 = Infinity, y1 = -Infinity;
+      for (const g of geos) { const a = g.getAttribute('position'); for (let i = 0; i < a.count; i++) { y0 = Math.min(y0, a.getY(i)); y1 = Math.max(y1, a.getY(i)); } }
+      const h = Math.max(0.01, y1 - y0), schaal = Math.min(1.6, 0.4 + h * 0.2);
+      for (const g of geos) {
+        const a = g.getAttribute('position'), w = new Float32Array(a.count);
+        for (let i = 0; i < a.count; i++) { const f = (a.getY(i) - y0) / h; w[i] = f * f * schaal; }
+        g.setAttribute('aWind', new THREE.BufferAttribute(w, 1));
+      }
+    }
+    for (const g of geos) {
       opts.nabewerk?.(g);
       (opts.castShadow === false ? this.receivers : this.casters).push(g);
     }
@@ -53,7 +71,13 @@ export class StaticBuilder {
 
   build(): THREE.Group {
     const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0, flatShading: true });
+    const mat = metDetail(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0, flatShading: true }), { buiten: this.opties.buiten });
+    // samenvoegen vraagt dezelfde attributen overal: aDetail = 0 waar het ontbreekt
+    for (const g of [...this.casters, ...this.receivers]) {
+      if (!g.getAttribute('aDetail')) g.setAttribute('aDetail', new THREE.BufferAttribute(new Float32Array(g.getAttribute('position').count), 1));
+      if (!g.getAttribute('aWind')) g.setAttribute('aWind', new THREE.BufferAttribute(new Float32Array(g.getAttribute('position').count), 1));
+      if (g.getAttribute('uv')) g.deleteAttribute('uv');
+    }
     if (this.casters.length) {
       const m = new THREE.Mesh(mergeGeometries(this.casters), mat);
       m.castShadow = true; m.receiveShadow = true; m.name = 'static-casters';

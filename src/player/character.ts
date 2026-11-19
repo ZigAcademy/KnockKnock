@@ -80,6 +80,9 @@ export class Character {
   private phase = 0;
   /** Zittend aan een bureau (benen naar voren, handen op het toetsenbord). */
   zit = false;
+  /** Punt (wereld) waar het hoofd naar kijkt, of null. Het hoofd draait zacht mee, binnen grenzen. */
+  kijkNaar: THREE.Vector3 | null = null;
+  private kijk = { yaw: 0, pitch: 0 };
   /** Wordt aangeroepen bij elke voetstap (voor het geluid). */
   onStap: ((ren: boolean) => void) | null = null;
   private stapFase = 0;
@@ -183,7 +186,7 @@ export class Character {
       }
       // iedereen een eigen startmoment, zodat groepjes niet synchroon ademen
       mixer.setTime(Math.random() * 3);
-      const schoon = [...ZIT.map(([n]) => bones.get(n)), ...voeten.map((v) => v.voet)]
+      const schoon = [...ZIT.map(([n]) => bones.get(n)), ...voeten.map((v) => v.voet), bones.get('Head')]
         .filter((b): b is THREE.Bone => !!b)
         .map((bot) => ({ bot, q: bot.quaternion.clone(), p: bot.position.clone() }));
       this.rig = { mixer, acties, bones, voeten, schoon };
@@ -243,6 +246,7 @@ export class Character {
     mixer.update(dt);
     for (const s of this.rig!.schoon) { s.q.copy(s.bot.quaternion); s.p.copy(s.bot.position); }
     this.body.position.y = zit ? ZIT_HOOGTE : 0;
+    this.hoofdDraaien(dt, bones.get('Head'));
     if (zit) {
       zitHouding(bones, this.root, (this.phase += dt));
       // voeten aan het eind van het (gedraaide) onderbeen zetten
@@ -253,6 +257,31 @@ export class Character {
         voet.position.copy(voet.parent!.worldToLocal(doel));
       }
     }
+  }
+
+  /** Hoofd zacht naar het kijkpunt draaien (bovenop de animatie), max ±60° opzij en ±20° op/neer. */
+  private hoofdDraaien(dt: number, hoofd: THREE.Bone | undefined): void {
+    if (!hoofd) return;
+    let doelYaw = 0, doelPitch = 0;
+    if (this.kijkNaar) {
+      const lokaal = this.root.worldToLocal(this.kijkNaar.clone());
+      const hoogte = 1.6 * this.root.scale.y;
+      doelYaw = THREE.MathUtils.clamp(Math.atan2(lokaal.x, lokaal.z), -1.05, 1.05);
+      // achter je kijken kan niet: dan weer recht vooruit
+      if (lokaal.z < -0.3) doelYaw = 0;
+      doelPitch = THREE.MathUtils.clamp(-Math.atan2(lokaal.y - hoogte, Math.hypot(lokaal.x, lokaal.z)), -0.35, 0.35);
+    }
+    const k = 1 - Math.exp(-dt * 5);
+    this.kijk.yaw += (doelYaw - this.kijk.yaw) * k;
+    this.kijk.pitch += (doelPitch - this.kijk.pitch) * k;
+    if (Math.abs(this.kijk.yaw) < 1e-3 && Math.abs(this.kijk.pitch) < 1e-3) return;
+    // draaien om de as van het lichaam (wereld-y) en de zijas, omgezet naar de ruimte van het bot
+    const pq = hoofd.parent!.getWorldQuaternion(new THREE.Quaternion()).invert();
+    const rq = this.root.getWorldQuaternion(new THREE.Quaternion());
+    const op = new THREE.Vector3(0, 1, 0).applyQuaternion(rq).applyQuaternion(pq);
+    const zij = new THREE.Vector3(1, 0, 0).applyQuaternion(rq).applyQuaternion(pq);
+    hoofd.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(op, this.kijk.yaw));
+    hoofd.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(zij, this.kijk.pitch));
   }
 
   // ---------------- terugval: primitieven ----------------

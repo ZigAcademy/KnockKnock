@@ -140,6 +140,16 @@ Leerinhoud, spelregels en flow zijn niet veranderd; de bestaande tests zijn onge
 
 **Getest:** 27 Playwright-tests groen, waarvan 13 nieuw: de afleiding van de onderdelen per woning (7), voortgang herstellen en opnieuw beginnen, een gespeelde woning na herladen, herkansing + achter de schermen + voice-over (score blijft 5/7), achter de schermen op een telefoon met minder beweging en zonder voice-over (en de finale gaat open na woning 6), alle tuinen + busje dat rijdt en stopt na de finale, dakgoot en stallinglamp vóór en na. Elke test controleert dat er geen JavaScript-fouten zijn. Tijdens het testen gevonden en opgelost: het verborgen scherm "Achter de schermen" lag als donkere laag over het spel; de route paste niet in beeld bij zeven stappen; het busje stopte bij elke deur.
 
+## Graphics ✔
+- **Beeldkwaliteit** (Instellingen → Beeldkwaliteit: Automatisch / Hoog / Laag): bij hoog een nabewerkingsketen (`src/render/beeld.ts`): SSAO (zachte schaduw in hoeken en onder randen), subtiele bloom, Neutral-tone mapping (houdt Zig-blauw en -oranje fel), iets meer contrast, zachte vignet, SMAA. Laag = precies het oude beeld. Automatisch begint hoog en zakt naar laag als de framerate 3 s onder 40 fps blijft.
+- **Lucht en omgevingslicht** uit een CC0-HDRI (echte wolkenlucht, zachte reflecties in ruiten en glas).
+- **Oppervlakken**: klinkers op stoep en tuinpaden, asfalt met slijtage, baksteen met voegen, dakpannen (CC0, als grijswaardedetail over de eigen kleuren; één atlas van 570 kB, geen extra draw calls).
+- **Leven**: bomen, struiken en bloemen wiegen in de wind; langzame wolkenschaduwen over de straat; vogels; rook uit drie schoorstenen. Stil bij "minder beweging".
+- **Personages**: kijken met hun hoofd naar je als je dichtbij bent (huurders in de tuin, voorbijgangers, de huurder in de deur).
+- Bronnen: `public/assets/omgeving/BRONNEN.md`. Build 13 MB (onder 15 MB).
+- **Niet gedaan:** knipperende ogen (de ogen zitten in de vertexkleuren van het samengevoegde model; dat vraagt een aparte aanpak) en Blender-ingebakken licht in de kamers.
+- **60 fps:** niet gemeten op een echte laptop (de tests draaien zonder GPU). Graag testen met `?fps`; zakt het, dan schakelt Automatisch zelf naar laag.
+
 ## Testen
 - `npm run dev` → spelen in de browser. Voeg `?fps` toe aan de URL voor een fps-teller.
 - `npm run build` en `npm test` (Playwright, screenshots in `tests/screenshots/`).

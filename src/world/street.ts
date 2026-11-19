@@ -51,7 +51,7 @@ const houseX = (i: number) => i * LAYOUT.houseWidth;
 const DOOR_OFFSET = 1.5;
 
 export function buildStreet(): Street {
-  const b = new StaticBuilder();
+  const b = new StaticBuilder({ buiten: true });
   const colliders: Collider[] = [];
   const doors = new Map<number, DoorInfo>();
   const group = new THREE.Group();

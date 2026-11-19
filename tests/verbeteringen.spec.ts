@@ -353,3 +353,28 @@ test.describe('7 + 8. leven in de straat', () => {
     expect(fouten).toEqual([]);
   });
 });
+
+test.describe('graphics', () => {
+  test('beeldkwaliteit hoog/laag via instellingen; automatisch zakt naar laag bij een trage renderer', async ({ page }) => {
+    test.setTimeout(120_000);
+    const fouten: string[] = [];
+    await open(page, fouten);
+    const modus = () => page.evaluate(() => (window as unknown as { __wijkwijs: { beeldModus: () => string } }).__wijkwijs.beeldModus());
+    // standaard automatisch: de software-renderer van de test is te traag, dus binnen enkele seconden laag
+    await expect.poll(modus, { timeout: 30_000 }).toBe('laag');
+    await page.getByTestId('knop-instellingen').click();
+    await page.getByTestId('kwaliteit').selectOption('hoog');
+    expect(await modus()).toBe('hoog');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: `${SHOTS}/80-kwaliteit-hoog.png` });
+    // bij een vaste keuze schakelt hij niet zelf terug
+    await page.waitForTimeout(4000);
+    expect(await modus()).toBe('hoog');
+    await page.getByTestId('knop-instellingen').click();
+    await page.getByTestId('kwaliteit').selectOption('laag');
+    expect(await modus()).toBe('laag');
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wijkwijs-instellingen')!).kwaliteit)).toBe('laag');
+    expect(fouten).toEqual([]);
+  });
+});

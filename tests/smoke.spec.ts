@@ -108,10 +108,10 @@ test('straat + huurderfase woning 1 (Lindelaan 14)', async ({ page }) => {
   await page.screenshot({ path: `${SHOTS}/${n++}-vinkje.png` });
 
   // toetsenbord: loop terug de straat op
+  // (houd S ingedrukt tot je van de deur weg bent; de software-renderer van de test is soms traag)
   await page.keyboard.down('s');
-  await page.waitForTimeout(1200);
+  await expect(prompt).toBeHidden({ timeout: 10_000 });
   await page.keyboard.up('s');
-  await expect(prompt).toBeHidden();
   await page.screenshot({ path: `${SHOTS}/30-toetsenbord.png` });
 
   expect(errors).toEqual([]);

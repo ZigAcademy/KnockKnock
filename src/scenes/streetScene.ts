@@ -1,3 +1,6 @@
+import { LuchtLeven } from '../world/lucht';
+import { omgevingsTijd } from '../render/detail';
+import { laadOmgeving } from '../render/omgeving';
 import { Geholpen } from '../world/geholpen';
 import * as THREE from 'three';
 import { buildStreet, HUISNUMMERS, type DoorInfo } from '../world/street';
@@ -33,6 +36,9 @@ export class StreetScene {
   private kantoorView = { pos: new THREE.Vector3(36, 3.2, 9), kijk: new THREE.Vector3(44, 3.4, 9) };
   private camGoal = { pos: new THREE.Vector3(), look: new THREE.Vector3(), lookNow: new THREE.Vector3() };
   private leven: StraatLeven;
+  private lucht: LuchtLeven;
+  /** Wordt door main aangeroepen met de renderer (nodig voor het omgevingslicht). */
+  onRenderer: (r: THREE.WebGLRenderer) => void = () => {};
   private deurHuurder: string | null = null;
   private geholpen: Geholpen;
   private afWoningen = new Set<string>();
@@ -92,6 +98,10 @@ export class StreetScene {
 
     this.colliders = street.colliders;
     this.leven = new StraatLeven(s, street.colliders);
+    // rook uit de schoorstenen van nr 18, 22 en 26 (schoorsteen op x = huis - 1.6, z = -5.2, top op 8.6 m)
+    this.lucht = new LuchtLeven(s, [2, 4, 6].map((i) => new THREE.Vector3(i * 6 - 1.6, 8.7, -5.2)));
+    this.lucht.resize(window.innerHeight);
+    this.onRenderer = (r) => laadOmgeving(r, s, () => { this.leven.echteLucht(); hemi.intensity = 1.05; });
     this.geholpen = new Geholpen(s, street.colliders, street.doors, street.bewoon26);
     this.huurderLook = (id) => HUURDER_LOOK[id] ?? {};
     // het busje stopt even voor woningen die geholpen zijn
@@ -290,7 +300,9 @@ export class StreetScene {
 
   update(dt: number, t: number, reducedMotion: boolean): void {
     this.markers.update(t, reducedMotion);
+    if (!reducedMotion) omgevingsTijd.value += dt;
     this.leven.update(dt, this.camera, this.player.position, reducedMotion);
+    this.lucht.update(dt, t, reducedMotion);
     this.geholpen.update(dt, this.player.position, this.camera, reducedMotion);
     const v = this.vlucht;
     if (v) {
@@ -313,6 +325,7 @@ export class StreetScene {
     d.deur.deur.rotation.y = e * 1.75;
     d.deur.opening.visible = d.open > 0.02;
     d.huurder.root.visible = d.open > 0.45;
+    d.huurder.kijkNaar = this.camera.position.clone();
     d.huurder.animate(dt, 0);
     for (const b of this.buren) b.animate(dt, 0);
     const s = this.sleutels;
@@ -330,6 +343,7 @@ export class StreetScene {
   }
 
   resize(w: number, h: number): void {
+    this.lucht.resize(h);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   }
