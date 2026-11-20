@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { detailVoorKleur, metDetail } from '../render/detail';
+import type { Beplanting } from './beplanting';
+import { WORLD } from '../theme';
 import { bakGeometrie, geplaatsteMaat, kitModel, plaatsMatrix, type KitNaam, type Palet, type Plaatsing } from '../assets/modellen';
 
 /**
@@ -11,9 +13,17 @@ export class StaticBuilder {
   private casters: THREE.BufferGeometry[] = [];
   private receivers: THREE.BufferGeometry[] = [];
   private tmpColor = new THREE.Color();
+  /** Heggen en gazons (buitenmaten), voor de losse blaadjes en graspollen erop. */
+  readonly heggen: THREE.Box3[] = [];
+  readonly gazons: THREE.Box3[] = [];
+  /** Paden en stoepjes: daar komt geen gras. */
+  readonly paden: THREE.Box3[] = [];
+  /** Plantenbakken en dergelijke: daar komt ook geen gras doorheen. */
+  readonly obstakels: THREE.Box3[] = [];
 
   /** buiten: wind in bomen en planten, wolkenschaduw (alleen voor de straat). */
-  constructor(private opties: { buiten?: boolean } = {}) {}
+  /** hegZonderKern: deze heg wordt door een echt heg-model vervangen, dus geen doos eronder (die schemert anders door). */
+  constructor(private opties: { buiten?: boolean; beplanting?: Beplanting; hegZonderKern?: (b: THREE.Box3) => boolean } = {}) {}
 
   add(geom: THREE.BufferGeometry, color: string, opts: { castShadow?: boolean } = {}): void {
     let g = geom.index ? geom.toNonIndexed() : geom;
@@ -25,6 +35,14 @@ export class StaticBuilder {
     for (let i = 0; i < n; i++) { arr[i * 3] = c.r; arr[i * 3 + 1] = c.g; arr[i * 3 + 2] = c.b; }
     g.setAttribute('color', new THREE.BufferAttribute(arr, 3));
     const det = detailVoorKleur(color);
+    const kl = color.toLowerCase();
+    if (kl === WORLD.hedge.toLowerCase()) {
+      g.computeBoundingBox(); this.heggen.push(g.boundingBox!.clone());
+      if (this.opties.hegZonderKern?.(g.boundingBox!)) { g.dispose(); return; }
+    }
+    else if (kl === WORLD.grassDark.toLowerCase()) { g.computeBoundingBox(); this.gazons.push(g.boundingBox!.clone()); }
+    else if (kl === WORLD.path.toLowerCase() || kl === WORLD.sidewalk.toLowerCase()) { g.computeBoundingBox(); this.paden.push(g.boundingBox!.clone()); }
+    else if (kl === '#7a6656' || kl === '#5a4a3e') { g.computeBoundingBox(); this.obstakels.push(g.boundingBox!.clone()); }
     if (det) g.setAttribute('aDetail', new THREE.BufferAttribute(new Float32Array(n).fill(det), 1));
     (opts.castShadow === false ? this.receivers : this.casters).push(g);
   }
@@ -41,7 +59,12 @@ export class StaticBuilder {
    * Kitmodel ingebakken in de samengevoegde geometrie (kleuren via het palet).
    * Geeft de geplaatste maat terug, of null als het model niet geladen is.
    */
-  model(kit: KitNaam, naam: string, p: Plaatsing, palet?: Palet, opts: { castShadow?: boolean; nabewerk?: (g: THREE.BufferGeometry) => void } = {}): THREE.Vector3 | null {
+  model(kit: KitNaam, naam: string, p: Plaatsing, palet?: Palet, opts: { castShadow?: boolean; nabewerk?: (g: THREE.BufferGeometry) => void; detail?: number } = {}): THREE.Vector3 | null {
+    // bomen, struiken, bloemen en gras: mooiere planten (instanced) als die er zijn
+    if (kit === 'natuur' && this.opties.beplanting?.neemOver(naam, p)) {
+      const oud = kitModel(kit, naam);
+      return oud ? geplaatsteMaat(oud, p) : new THREE.Vector3(1, 1, 1);
+    }
     const o = kitModel(kit, naam);
     if (!o) return null;
     const geos = bakGeometrie(o, plaatsMatrix(o, p), palet);
@@ -58,6 +81,8 @@ export class StaticBuilder {
     }
     for (const g of geos) {
       opts.nabewerk?.(g);
+      // oppervlaktedetail voor het hele model (bijv. houtnerf op een hek)
+      if (opts.detail) g.setAttribute('aDetail', new THREE.BufferAttribute(new Float32Array(g.getAttribute('position').count).fill(opts.detail), 1));
       (opts.castShadow === false ? this.receivers : this.casters).push(g);
     }
     return geplaatsteMaat(o, p);

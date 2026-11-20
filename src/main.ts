@@ -1,4 +1,5 @@
 import { Beeld } from './render/beeld';
+import { LAGE_RESOLUTIE, VERSIE } from './game/versie';
 import { AchterDeSchermen } from './ui/achterschermen';
 import { t, tx, zetTaal, opTaal } from './i18n';
 import './style.css';
@@ -84,8 +85,10 @@ async function start(): Promise<void> {
   const corporatiefase = new CorporatieFase({ content, street, cards, zig, transition, progress, reducedMotion, setView, achter });
 
   // HUD, panelen, SCORM
-  beeld.zetKwaliteit(settings.waarden.kwaliteit);
-  settings.onChange(() => { if (settings.waarden.kwaliteit !== beeld.keuze) beeld.zetKwaliteit(settings.waarden.kwaliteit); });
+  // lage resolutie: altijd zonder nabewerking (het eerdere beeld)
+  const gewensteKwaliteit = () => (LAGE_RESOLUTIE ? 'laag' : settings.waarden.kwaliteit);
+  beeld.zetKwaliteit(gewensteKwaliteit());
+  settings.onChange(() => { if (gewensteKwaliteit() !== beeld.keuze) beeld.zetKwaliteit(gewensteKwaliteit()); });
   const hud = new Hud(ui, settings);
   // taalwissel: vaste labels direct bijwerken; kaarten en Zig365 volgen bij het volgende scherm
   settings.onChange(() => zetTaal(settings.waarden.taal));
@@ -113,6 +116,8 @@ async function start(): Promise<void> {
     try { const l = localStorage.getItem(LOKAAL); if (l) progress.restore(l); } catch { /* geen opslag */ }
   }
   instellingen.lokaal = !scorm.verbonden;
+  // versie wisselen zonder LMS: de voortgang staat al in de browser, dus gewoon opnieuw laden
+  instellingen.onHerlaad = () => location.reload();
   instellingen.onOpnieuw = () => {
     try { localStorage.removeItem(LOKAAL); } catch { /* geen opslag */ }
     location.reload();
@@ -189,8 +194,15 @@ async function start(): Promise<void> {
       return;
     }
   };
-  overlay.onAanbellen(aanbellen);
-  input.onAction = aanbellen;
+  overlay.onAanbellen(() => actie());
+  // E: aanbellen bij een deur, anders in- of uitstappen bij een auto
+  const actie = () => {
+    if (!street.rijden.rijdt && street.deurInRange()) { void aanbellen(); return; }
+    if (bezig || overlay.meldingOpen || panelOpen()) return;
+    street.instapUitstap();
+  };
+  input.onAction = actie;
+  const vertaal = t;
 
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -207,6 +219,8 @@ async function start(): Promise<void> {
     player: () => ({ x: street.player.position.x, z: street.player.position.z }),
     drawCalls: () => renderer.info.render.calls,
     beeldModus: () => beeld.modus,
+    versie: VERSIE,
+    THREE,
     beeld,
     progress: () => Object.fromEntries(progress.woningen),
     scorm: () => scorm.verbonden,
@@ -255,8 +269,13 @@ async function start(): Promise<void> {
     if (!view) {
       geluid.setSfeer('straat');
       street.update(dt, t, reducedMotion());
-      const hier = !bezig && !overlay.meldingOpen && !panelOpen() ? street.deurInRange() : null;
-      overlay.showPrompt(hier ? hier.woning.adres : null);
+      const vrij = !bezig && !overlay.meldingOpen && !panelOpen();
+      const hier = vrij ? street.deurInRange() : null;
+      const auto = vrij && !hier ? street.autoInRange() : null;
+      if (hier) overlay.showPrompt(hier.woning.adres);
+      else if (auto && street.rijden.rijdt) overlay.showPrompt(vertaal('rijdenHint'), vertaal('uitstappen'), vertaal('uitstappenHint'));
+      else if (auto) overlay.showPrompt(vertaal('auto'), vertaal('instappen'), vertaal('instappenHint'));
+      else overlay.showPrompt(null);
       beeld.render(street.scene, street.camera, dt);
     } else {
       overlay.showPrompt(null);

@@ -22,7 +22,7 @@ export class Beeld {
   private ao: N8AOPostPass | null = null;
   private actief: 'hoog' | 'laag' = 'laag';
   keuze: Kwaliteit = 'auto';
-  private meet = { tijd: 0, frames: 0, traag: 0 };
+  private meet = { tijd: 0, frames: 0, traag: 0, vorige: 0 };
   /** Wordt aangeroepen als "auto" zelf naar laag is gezakt. */
   onAutoLaag: (() => void) | null = null;
 
@@ -32,7 +32,7 @@ export class Beeld {
 
   zetKwaliteit(k: Kwaliteit): void {
     this.keuze = k;
-    this.meet = { tijd: 0, frames: 0, traag: 0 };
+    this.meet = { tijd: 0, frames: 0, traag: 0, vorige: 0 };
     this.activeer(k === 'laag' ? 'laag' : 'hoog');
   }
 
@@ -102,8 +102,11 @@ export class Beeld {
   /** Auto: blijft het 3 meetvensters van 1 s onder 40 fps, dan naar laag (voor deze sessie). */
   private bewaak(dt: number): void {
     if (this.keuze !== 'auto' || this.actief !== 'hoog') return;
-    const m = this.meet;
-    m.tijd += dt; m.frames++;
+    // echte tijd (niet de speltijd, die is per beeld begrensd en loopt op een trage computer achter)
+    const m = this.meet, nu = performance.now() / 1000;
+    void dt;
+    if (m.vorige) m.tijd += Math.min(1, nu - m.vorige);
+    m.vorige = nu; m.frames++;
     if (m.tijd < 1) return;
     const fps = m.frames / m.tijd;
     m.traag = fps < 40 ? m.traag + 1 : 0;

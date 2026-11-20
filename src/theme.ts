@@ -1,3 +1,4 @@
+import { LAGE_RESOLUTIE } from './game/versie';
 /** Zig Grow-huisstijl. Alleen deze merkkleuren; oranje uitsluitend als accent. */
 export const THEME = {
   blue: '#1F5AFF',
@@ -21,15 +22,19 @@ export const WORLD = {
   sky: '#CFDDF7',
   fog: '#DCE6F8',
   grass: '#8FA67A',
-  grassDark: '#7E9669',
+  // gazon in de voortuinen; standaard iets dieper, zodat de grasplukken erin opgaan
+  grassDark: LAGE_RESOLUTIE ? '#7E9669' : '#6E8756',
   asphalt: '#5E6166',
   roadLine: '#E4E4DF',
   sidewalk: '#B9B4AA',
   kerb: '#9C978E',
   path: '#C7B9A4',
-  bricks: ['#9C6B5A', '#A7775F', '#8F6455', '#A88470', '#94705E', '#9F7A66', '#8C6A5C'],
+  // standaard: dicht bij elkaar (één straat, net iets andere partijen); lage resolutie: de eerdere, gevarieerde kleuren
+  bricks: LAGE_RESOLUTIE ? ['#9C6B5A', '#A7775F', '#8F6455', '#A88470', '#94705E', '#9F7A66', '#8C6A5C'] : ['#9A6957', '#9E6D5A', '#966654', '#A0705C', '#98695A', '#9C6C58', '#956856'],
   roof: '#4A4E55',
   roofEdge: '#3D4046',
+  /** Tweede dakkleur (net iets anders), ook met dakpannen. */
+  roofAlt: LAGE_RESOLUTIE ? '#3D4046' : '#45494F',
   frame: '#F1EFEA',
   doorway: '#2B2F35',
   floor: '#B89A7A',

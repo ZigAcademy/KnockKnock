@@ -16,3 +16,7 @@ Originelen in `tools/bron-assets/polyhaven/` (niet in git). Opnieuw maken: `node
 ## Bibliotheken (npm, gebundeld)
 - [postprocessing](https://github.com/pmndrs/postprocessing) 6.39.6 (Zlib): nabewerkingsketen, bloom, tone mapping, SMAA, vignet.
 - [n8ao](https://github.com/N8python/n8ao) 2.1.0 (ISC): ambient occlusion (SSAO).
+
+## Uitbreiding detail-atlas (3×3)
+- Poly Haven (CC0): `leafy_grass` (gras) en `wood_planks` (houten hekken en schuurtje), als grijswaardedetail.
+- Heg-tegel en `heg_blad.png`: zelf samengesteld (`tools/heg.mjs`) uit bladeren van de Stylized Nature MegaKit (Quaternius, CC0).

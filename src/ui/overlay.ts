@@ -62,12 +62,15 @@ export class Overlay {
 
   onAanbellen(fn: () => void): void { this.promptBtn.addEventListener('click', fn); }
 
-  showPrompt(adres: string | null): void {
+  /** Knop met E boven in beeld: aanbellen bij een deur (standaard), of een andere actie (instappen). */
+  showPrompt(adres: string | null, knop = t('aanbellen'), hint?: string): void {
     if (adres === null) { if (!this.prompt.hidden) this.prompt.hidden = true; return; }
-    if (this.prompt.hidden || this.promptAdres.textContent !== adres) {
+    const lbl = this.promptBtn.querySelector('.lbl')!;
+    if (this.prompt.hidden || this.promptAdres.textContent !== adres || lbl.textContent !== knop) {
       this.promptAdres.textContent = adres;
+      lbl.textContent = knop;
       this.prompt.hidden = false;
-      this.announce(t('aanbellenHint', adres));
+      this.announce(hint ?? t('aanbellenHint', adres));
     }
   }
 

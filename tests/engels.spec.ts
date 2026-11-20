@@ -1,13 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { SHOTS, kiesPersonage, loopNaar, woning, scenarios, type Hook } from './helpers';
+import { SHOTS, kiesPersonage, loopNaar, woning, scenarios, type Hook, laagInTest } from './helpers';
 
 // Engelse versie: taal kiezen op het titelscherm en woning 1 helemaal doorspelen met de en-teksten.
 test('English: house 1 from door to Zig365, with English texts', async ({ page }) => {
   test.setTimeout(240_000);
   const fouten: string[] = [];
   page.on('pageerror', (e) => fouten.push(String(e)));
+  await laagInTest(page);
   await page.goto('/');
-  await expect(page.getByTestId('titelscherm')).toBeVisible();
+  await expect(page.getByTestId('titelscherm')).toBeVisible({ timeout: 60_000 });
   await page.getByTestId('taal-en').click();
   await expect(page.getByTestId('taal-en')).toHaveAttribute('aria-checked', 'true');
   await page.screenshot({ path: `${SHOTS}/60-en-titel.png` });
@@ -51,7 +52,7 @@ test('English: house 1 from door to Zig365, with English texts', async ({ page }
   await page.waitForTimeout(500);
   await page.screenshot({ path: `${SHOTS}/62-en-wissel.png` });
   for (const deel of w.corporatiefase) {
-    await expect(kaart).toContainText(deel.intro.en!, { timeout: 15_000 });
+    await expect(kaart).toContainText(deel.intro.en!, { timeout: 45_000 });
     await page.getByTestId('kaart-knop').click();
     const z = page.getByTestId('zig365');
     for (const [i, stap] of deel.stappen.entries()) {
@@ -76,7 +77,7 @@ test('English: house 1 from door to Zig365, with English texts', async ({ page }
       await page.getByTestId('z365-volgende').click();
     }
   }
-  await expect(kaart).toContainText(w.afloop!.en!, { timeout: 15_000 });
+  await expect(kaart).toContainText(w.afloop!.en!, { timeout: 45_000 });
   await page.getByTestId('kaart-knop').click();
   const ads = page.getByTestId('achter-de-schermen');
   await expect(ads).toContainText('Behind the scenes');

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { WORLD } from '../theme';
+import { LAGE_RESOLUTIE } from '../game/versie';
 
 /**
  * Oppervlaktedetail (klinkers, asfalt, baksteen, dakpannen) uit één grijswaarde-atlas
@@ -8,7 +9,7 @@ import { WORLD } from '../theme';
  * voegt alleen structuur toe. Projectie in wereldcoördinaten, dus geen UV's nodig.
  * Zolang de atlas niet geladen is, doet het detail niets (1×1 grijs = ×1).
  */
-export const enum Detail { Geen = 0, Klinker = 1, Asfalt = 2, Baksteen = 3, Dak = 4 }
+export const enum Detail { Geen = 0, Klinker = 1, Asfalt = 2, Baksteen = 3, Dak = 4, Gras = 5, Hout = 6, Heg = 7 }
 
 /** Kleur → soort detail (zodat bestaande code niets hoeft te weten). */
 const PER_KLEUR = new Map<string, Detail>([
@@ -19,6 +20,13 @@ const PER_KLEUR = new Map<string, Detail>([
   ['#a9674f', Detail.Baksteen], // verdieping van het kantoor
   ['#7a5a4c', Detail.Baksteen], // sokkel van het kantoor
   [WORLD.roof.toLowerCase(), Detail.Dak],
+  [WORLD.roofAlt.toLowerCase(), Detail.Dak],
+  [WORLD.grass.toLowerCase(), Detail.Gras],
+  [WORLD.grassDark.toLowerCase(), Detail.Gras],
+  [WORLD.hedge.toLowerCase(), Detail.Heg],
+  [WORLD.wood.toLowerCase(), Detail.Hout],
+  ['#6a5c50', Detail.Hout], // schuurtje (planken)
+  ['#5e5046', Detail.Hout], // deur van het schuurtje
 ]);
 export function detailVoorKleur(kleur: string): Detail { return PER_KLEUR.get(kleur.toLowerCase()) ?? Detail.Geen; }
 
@@ -45,6 +53,8 @@ function laadAtlas(): void {
  * `aDetail` (float, 0 = geen) hebben.
  */
 export function metDetail(mat: THREE.MeshStandardMaterial, opts: { buiten?: boolean } = {}): THREE.MeshStandardMaterial {
+  // lage resolutie: geen textuurdetail, wind en wolkenschaduw (zoals het eerdere beeld)
+  if (LAGE_RESOLUTIE) return mat;
   laadAtlas();
   const buiten = opts.buiten ? 1 : 0;
   mat.onBeforeCompile = (sh) => {
@@ -79,11 +89,12 @@ uniform float uTijd;
 varying float vDetail;
 varying vec3 vWPos;
 varying vec3 vWNrm;
-// tegel i uit de 2x2-atlas, zonder naden bij het herhalen (textureGrad op de doorlopende uv)
+// tegel i uit de 3x3-atlas, zonder naden bij het herhalen (textureGrad op de doorlopende uv)
 float detailTegel(int i, vec2 uv) {
-  vec2 off = vec2(float(i - (i / 2) * 2), float(1 - i / 2)) * 0.5;
-  vec2 f = fract(uv) * 0.49 + 0.005 + off;
-  return textureGrad(uDetail, f, dFdx(uv) * 0.49, dFdy(uv) * 0.49).r;
+  const float T = 1.0 / 3.0, S = 1.0 / 3.0 - 0.01;
+  vec2 off = vec2(float(i - (i / 3) * 3), float(2 - i / 3)) * T;
+  vec2 f = fract(uv) * S + 0.005 + off;
+  return textureGrad(uDetail, f, dFdx(uv) * S, dFdy(uv) * S).r;
 }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
 #if ${buiten} == 1
@@ -98,21 +109,21 @@ float detailTegel(int i, vec2 uv) {
 if (vDetail > 0.5) {
   int id = int(vDetail + 0.5) - 1;
   vec3 n = abs(normalize(vWNrm));
-  // tegelmaat in meters: klinkers 2.5, asfalt 3, baksteen 3 (iets kleiner, low-poly), dak 3.5
-  float maat = id == 0 ? 2.5 : id == 1 ? 3.0 : id == 2 ? 2.2 : 3.0;
-  float kracht = id == 0 ? 0.42 : id == 1 ? 0.3 : id == 2 ? 0.55 : 0.6;
+  // tegelmaat in meters en kracht: klinkers, asfalt, baksteen, dak, gras, hout, heg
+  float maat = id == 0 ? 2.5 : id == 1 ? 3.0 : id == 2 ? 2.2 : id == 3 ? 3.0 : id == 4 ? 2.2 : id == 5 ? 1.6 : 0.85;
+  float kracht = id == 0 ? 0.42 : id == 1 ? 0.3 : id == 2 ? 0.55 : id == 3 ? 0.7 : id == 4 ? 0.6 : id == 5 ? 0.65 : 0.95;
   vec2 uv;
   if (id == 3) uv = vec2(vWPos.x, vWPos.y * 1.6 + vWPos.z * 0.3);
   else if (n.y > 0.7) uv = vWPos.xz;
   else if (n.x > n.z) uv = vWPos.zy;
   else uv = vWPos.xy;
   float d = detailTegel(id, uv / maat);
-  // verder weg minder detail (geen moiré)
+  // verder weg minder detail (geen moiré); daken en heggen blijven ook van ver herkenbaar
   float afstand = length(vWPos - cameraPosition);
-  kracht *= clamp(1.4 - afstand / 45.0, 0.25, 1.0);
+  kracht *= clamp(1.4 - afstand / 45.0, (id == 3 || id == 6) ? 0.75 : 0.25, 1.0);
   diffuseColor.rgb *= mix(1.0, clamp(d * 2.0, 0.35, 1.7), kracht);
 }`);
   };
-  mat.customProgramCacheKey = () => `detail-v2-${buiten}`;
+  mat.customProgramCacheKey = () => `detail-v3-${buiten}`;
   return mat;
 }

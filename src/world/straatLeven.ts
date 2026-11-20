@@ -2,6 +2,11 @@ import * as THREE from 'three';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { Character } from '../player/character';
 import { DECOR_LOOKS } from './looks';
+import { voertuig, VOERTUIG_VOOR } from './voertuigen';
+import { rondjeRoute } from './ringweg';
+import { LAGE_RESOLUTIE } from '../game/versie';
+const LAYOUT_WEST = -14;
+import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js';
 import { MODELLEN, kitMesh, demp } from '../assets/modellen';
 import { herkleurLak } from './paletten';
 import { woordmerkVerfMateriaal, WOORDMERK_VERHOUDING } from './logos';
@@ -178,11 +183,15 @@ class RijdendeAuto {
   private readonly z1 = 9.85; private readonly z2 = 7.3;
   private readonly r = (9.85 - 7.3) / 2;
 
-  constructor(scene: THREE.Scene, opts: { model?: string; lak?: string; start?: number; logo?: boolean } = {}) {
+  constructor(scene: THREE.Scene, opts: { model?: string; lak?: string; start?: number; logo?: boolean; echt?: string } = {}) {
     const lak = opts.lak ?? '#6B7A8C';
     this.s = opts.start ?? 0;
-    const m = kitMesh('autos', opts.model ?? 'hatchback', { w: opts.model === 'van' ? 1.7 : 1.5 });
-    if (m) {
+    // realistische auto uit de voertuigen-kit; anders de oude Kenney-auto (lage resolutie)
+    const echt = voertuig(opts.echt ?? VOERTUIG_VOOR[opts.model ?? 'hatchback'] ?? 'hatchback');
+    const m = echt ? null : kitMesh('autos', opts.model ?? 'hatchback', { w: opts.model === 'van' ? 1.7 : 1.5 });
+    if (echt) {
+      this.mesh = echt;
+    } else if (m) {
       herkleurLak(m.geometry, lak);
       if (opts.logo) maakWit(m.geometry);
       this.mesh = m;
@@ -204,11 +213,29 @@ class RijdendeAuto {
       const b = new THREE.Box3().setFromObject(this.mesh);
       const lengte = b.max.z - b.min.z, hoogte = b.max.y - b.min.y;
       // vrije strook tussen de rand van de wielkasten (±50%) en de ramen (±66% van de hoogte)
-      const y = b.min.y + hoogte * 0.575, zc = (b.min.z + b.max.z) / 2 - lengte * 0.15;
-      const lw = lengte * 0.4, lh = lw / WOORDMERK_VERHOUDING;
+      // pick-up (realistisch): op de portieren van de cabine; oude bus: achter de spiegel
+      const y = b.min.y + hoogte * (echt ? 0.47 : 0.575);
+      const zc = (b.min.z + b.max.z) / 2 + lengte * (echt ? 0.1 : -0.15);
+      const lw = lengte * (echt ? 0.25 : 0.4), lh = lw / WOORDMERK_VERHOUDING;
       const straal = new THREE.Raycaster();
       const groep = new THREE.Group();
-      for (const kant of [-1, 1]) {
+      // realistische pick-up: het logo als decal óp de carrosserie (volgt de bolling van het portier),
+      // op het voorportier tussen de sierstrip (±0,71 m) en de deurgreep (±0,97 m); gemeten met tools/autos/omzet.ts zij()
+      const lijf = echt ? (echt.getObjectByProperty('name', 'pickup-wit-body') as THREE.Mesh | undefined) : undefined;
+      if (lijf) {
+        const breed = 0.95, hoog = breed / WOORDMERK_VERHOUDING, dy = 0.835, dz = 0.62;
+        for (const kant of [-1, 1]) {
+          straal.set(new THREE.Vector3(kant * 5, dy, dz), new THREE.Vector3(-kant, 0, 0));
+          const raak = straal.intersectObject(lijf, false)[0];
+          if (!raak) continue;
+          const geo = new DecalGeometry(lijf, raak.point, new THREE.Euler(0, kant * Math.PI / 2, 0), new THREE.Vector3(breed, hoog, 0.35));
+          const decal = new THREE.Mesh(geo, woordmerkVerfMateriaal());
+          decal.name = 'busje-logo';
+          decal.receiveShadow = true;
+          groep.add(decal);
+        }
+      }
+      for (const kant of lijf ? [] : [-1, 1]) {
         straal.set(new THREE.Vector3(kant * 5, y, zc), new THREE.Vector3(-kant, 0, 0));
         const raak = straal.intersectObject(this.mesh, true)[0];
         const x = raak ? raak.point.x : kant * b.max.x;
@@ -229,10 +256,19 @@ class RijdendeAuto {
     scene.add(this.mesh);
   }
 
-  private get totaal(): number { const L = this.x1 - this.x0; return 2 * L + 2 * Math.PI * this.r; }
+  /** Eigen route (gesloten kromme), bijv. het rondje over de ringweg; anders de lus in de straat. */
+  private route: THREE.CatmullRomCurve3 | null = null;
+  private routeLengte = 0;
+  volgRoute(c: THREE.CatmullRomCurve3): void { this.route = c; this.routeLengte = c.getLength(); this.s = 0; }
+
+  private get totaal(): number { if (this.route) return this.routeLengte; const L = this.x1 - this.x0; return 2 * L + 2 * Math.PI * this.r; }
 
   /** Positie en kijkrichting op afstand s langs de route. */
   private pose(s: number): { p: THREE.Vector3; d: THREE.Vector3 } {
+    if (this.route) {
+      const u = (((s % this.routeLengte) + this.routeLengte) % this.routeLengte) / this.routeLengte;
+      return { p: this.route.getPointAt(u), d: this.route.getTangentAt(u).setY(0).normalize() };
+    }
     const L = this.x1 - this.x0, boog = Math.PI * this.r;
     s = ((s % this.totaal) + this.totaal) % this.totaal;
     const cz = (this.z1 + this.z2) / 2;
@@ -254,7 +290,8 @@ class RijdendeAuto {
   /** obstakels: mensen; voertuigen tellen alleen als ze dezelfde kant op rijden (geen patstelling). */
   update(dt: number, obstakels: THREE.Vector3[], voertuigen: RijdendeAuto[] = []): void {
     const { p, d } = this.pose(this.s);
-    let doelV = 3.2;
+    // op de ringweg mag het harder; in de straat rustig
+    let doelV = this.route && (p.x < LAYOUT_WEST || p.z < 3 || p.z > 15) ? 7.5 : 3.2;
     const voor = (o: THREE.Vector3, ruimte: number) => {
       const rel = o.clone().sub(p).setY(0);
       const v = rel.dot(d), lat = Math.abs(rel.x * d.z - rel.z * d.x);
@@ -262,7 +299,8 @@ class RijdendeAuto {
     };
     for (const o of obstakels) if (voor(o, 5.5)) doelV = 0;
     for (const a of voertuigen) if (a !== this && a.richting.dot(d) > 0.3 && voor(a.positie, 4.5) && a.positie.clone().sub(p).dot(d) > 0) doelV = 0;
-    // even stoppen voor een geholpen woning (westwaarts rijden, langs de huizen)
+    // even stoppen voor een geholpen woning (westwaarts rijden, langs de huizen); niet bij een eigen route
+    if (this.route) { this.bijwerken(dt, doelV); return; }
     const L = this.x1 - this.x0, boog = Math.PI * this.r;
     const sm = ((this.s % this.totaal) + this.totaal) % this.totaal;
     // per rondje één willekeurige geholpen woning (anders stopt het bij elke deur)
@@ -276,6 +314,10 @@ class RijdendeAuto {
     }
     if (sm < L) this.doelX = null;
     if (this.wacht > 0) { this.wacht -= dt; doelV = 0; }
+    this.bijwerken(dt, doelV);
+  }
+
+  private bijwerken(dt: number, doelV: number): void {
     this.v += (doelV - this.v) * (1 - Math.exp(-dt * (doelV < this.v ? 4 : 1.2)));
     this.s += this.v * dt;
     const n = this.pose(this.s);
@@ -348,7 +390,9 @@ export class StraatLeven {
     for (const m of this.mensen) { scene.add(m.char.root); colliders.push(m.collider); }
     this.hond = new Hond(scene);
     this.auto = new RijdendeAuto(scene);
-    this.busje = new RijdendeAuto(scene, { model: 'van', lak: '#EEF1F4', start: 62, logo: true });
+    // standaardversie: de auto rijdt een rondje over de ringweg om het blok
+    if (!LAGE_RESOLUTIE) this.auto.volgRoute(rondjeRoute());
+    this.busje = new RijdendeAuto(scene, { model: 'van', lak: '#EEF1F4', start: 62, logo: true, echt: 'pickup-wit' });
     this.busje.mesh.name = 'busje';
     colliders.push(this.auto.collider, this.busje.collider);
     const l = maakLucht();

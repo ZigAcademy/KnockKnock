@@ -1,3 +1,4 @@
+import { LAGE_RESOLUTIE, VERSIE } from '../game/versie';
 import { t, tx, titelPng } from '../i18n';
 import type { Scenarios } from '../content/types';
 import type { Progress } from '../game/progress';
@@ -43,6 +44,8 @@ export class InstellingenPaneel extends Paneel {
   /** Voortgang staat in de browser (geen LMS): dan kun je opnieuw beginnen. */
   lokaal = false;
   onOpnieuw: (() => void) | null = null;
+  /** Opnieuw laden met behoud van voortgang (versie wisselen). */
+  onHerlaad: (() => void) | null = null;
 
   constructor(root: HTMLElement, private settings: Settings) { super(root, 'paneel--instellingen', 'instellingen'); }
 
@@ -57,9 +60,13 @@ export class InstellingenPaneel extends Paneel {
         <label class="kies"><span>${t('taal')}</span>
           <select data-k="taal" data-testid="taal"><option value="nl" ${w.taal === 'nl' ? 'selected' : ''}>Nederlands</option><option value="en" ${w.taal === 'en' ? 'selected' : ''}>English</option></select>
         </label>
-        <label class="kies"><span>${t('beeldkwaliteit')}</span>
-          <select data-k="kwaliteit" data-testid="kwaliteit"><option value="auto" ${w.kwaliteit === 'auto' ? 'selected' : ''}>${t('kwaliteitAuto')}</option><option value="hoog" ${w.kwaliteit === 'hoog' ? 'selected' : ''}>${t('kwaliteitHoog')}</option><option value="laag" ${w.kwaliteit === 'laag' ? 'selected' : ''}>${t('kwaliteitLaag')}</option></select>
+        <label class="kies"><span>${t('versie')}</span>
+          <select data-k="versie" data-testid="versie"><option value="standaard" ${VERSIE === 'standaard' ? 'selected' : ''}>${t('versieStandaard')}</option><option value="laag" ${VERSIE === 'laag' ? 'selected' : ''}>${t('versieLaag')}</option></select>
         </label>
+        <p class="paneel-noot" data-versie-noot hidden></p>
+        ${LAGE_RESOLUTIE ? '' : `<label class="kies"><span>${t('beeldkwaliteit')}</span>
+          <select data-k="kwaliteit" data-testid="kwaliteit"><option value="auto" ${w.kwaliteit === 'auto' ? 'selected' : ''}>${t('kwaliteitAuto')}</option><option value="hoog" ${w.kwaliteit === 'hoog' ? 'selected' : ''}>${t('kwaliteitHoog')}</option><option value="laag" ${w.kwaliteit === 'laag' ? 'selected' : ''}>${t('kwaliteitLaag')}</option></select>
+        </label>`}
         <button type="button" class="btn btn--ghost" data-testid="personage-aanpassen" data-personage>${t('personageAanpassen')}</button>
         ${this.lokaal ? `<button type="button" class="btn btn--ghost" data-testid="opnieuw" data-opnieuw>${t('opnieuwBeginnen')}</button><p class="paneel-noot">${t('voortgangBrowser')}</p>` : ''}
         <p class="paneel-noot">${t('noot')}</p>
@@ -77,7 +84,19 @@ export class InstellingenPaneel extends Paneel {
     this.el.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((inp) => {
       inp.onchange = () => this.settings.zet(inp.dataset.k as 'geluid' | 'voiceOver' | 'minderBeweging', inp.checked);
     });
-    this.el.querySelector<HTMLSelectElement>('select[data-k="kwaliteit"]')!.onchange = (e) => this.settings.zet('kwaliteit', (e.target as HTMLSelectElement).value as 'auto' | 'hoog' | 'laag');
+    // versie wisselen: zonder LMS direct opnieuw laden (voortgang staat in de browser);
+    // in een LMS pas bij de volgende start, want opnieuw laden kan de SCORM-sessie breken
+    this.el.querySelector<HTMLSelectElement>('select[data-k="versie"]')!.onchange = (e) => {
+      const v = (e.target as HTMLSelectElement).value as 'standaard' | 'laag';
+      this.settings.zet('versie', v);
+      if (v === VERSIE) return;
+      if (this.lokaal) { this.onHerlaad?.(); return; }
+      const noot = this.el.querySelector<HTMLElement>('[data-versie-noot]')!;
+      noot.textContent = t('versieVolgendeKeer');
+      noot.hidden = false;
+    };
+    const kw = this.el.querySelector<HTMLSelectElement>('select[data-k="kwaliteit"]');
+    if (kw) kw.onchange = (e) => this.settings.zet('kwaliteit', (e.target as HTMLSelectElement).value as 'auto' | 'hoog' | 'laag');
     // taal wisselen: direct toepassen en het paneel in de nieuwe taal opnieuw tonen
     this.el.querySelector<HTMLSelectElement>('select[data-k="taal"]')!.onchange = (e) => {
       this.settings.zet('taal', (e.target as HTMLSelectElement).value as 'nl' | 'en');

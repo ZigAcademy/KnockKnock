@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { SHOTS, scenarios, woning, loopNaar, speelHuurderfase, kiesPersonage, type Hook } from './helpers';
+import { SHOTS, scenarios, woning, loopNaar, speelHuurderfase, kiesPersonage, type Hook, laagInTest } from './helpers';
 
 /**
  * Uitgebreide test van de verbeteringen:
@@ -30,7 +30,8 @@ function voortgang(af: string[]): string {
   return JSON.stringify({ v: 1, w: o, p: 'v21020' });
 }
 
-async function open(page: Page, fouten: string[], opslag: Record<string, string> = {}) {
+async function open(page: Page, fouten: string[], opslag: Record<string, string> = {}, kwaliteitVrij = false) {
+  if (!kwaliteitVrij) await laagInTest(page);
   page.on('pageerror', (e) => fouten.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) fouten.push(m.text()); });
   await page.addInitScript((o) => { for (const [k, v] of Object.entries(o)) if (!sessionStorage.getItem('gezet-' + k)) { localStorage.setItem(k, v); sessionStorage.setItem('gezet-' + k, '1'); } }, opslag);
@@ -81,7 +82,7 @@ test.describe('1. voortgang in de browser', () => {
     await speelHuurderfase(page, w1);
     // corporatiefase in één keer goed
     await speelZig(page, w1, () => false);
-    await expect(page.getByTestId('achter-de-schermen')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('achter-de-schermen')).toBeVisible({ timeout: 45_000 });
     await page.getByTestId('ads-knop').click();
     const opgeslagen = await page.evaluate(() => localStorage.getItem('knockknock-voortgang'));
     expect(JSON.parse(opgeslagen!).w.w1[4]).toBe(1);
@@ -100,7 +101,7 @@ async function speelZig(page: Page, w: typeof w1, fout: (nr: number) => boolean)
   const z = page.getByTestId('zig365');
   let nr = 0;
   for (const deel of w.corporatiefase) {
-    await expect(kaart).toContainText(deel.intro.nl, { timeout: 15_000 });
+    await expect(kaart).toContainText(deel.intro.nl, { timeout: 45_000 });
     await page.getByTestId('kaart-knop').click();
     for (const stap of deel.stappen) {
       await expect(z.locator('.z365-vraag')).toHaveText(stap.vraag.nl);
@@ -126,7 +127,7 @@ async function speelZig(page: Page, w: typeof w1, fout: (nr: number) => boolean)
     }
   }
   if (w.afloop) {
-    await expect(kaart).toContainText(w.afloop.nl, { timeout: 15_000 });
+    await expect(kaart).toContainText(w.afloop.nl, { timeout: 45_000 });
     await page.getByTestId('kaart-knop').click();
   }
 }
@@ -148,7 +149,7 @@ test.describe('3 + 4. herkansing en achter de schermen', () => {
     const fout = (nr: number) => nr === 0 || nr === totaal - 1;
     let nr = 0;
     for (const deel of w1.corporatiefase) {
-      await expect(kaart).toContainText(deel.intro.nl, { timeout: 15_000 });
+      await expect(kaart).toContainText(deel.intro.nl, { timeout: 45_000 });
       await page.getByTestId('kaart-knop').click();
       for (const stap of deel.stappen) {
         await expect(z.locator('.z365-vraag')).toHaveText(stap.vraag.nl);
@@ -193,7 +194,7 @@ test.describe('3 + 4. herkansing en achter de schermen', () => {
     }
 
     // afloop, dan achter de schermen
-    await expect(kaart).toContainText(w1.afloop!.nl, { timeout: 15_000 });
+    await expect(kaart).toContainText(w1.afloop!.nl, { timeout: 45_000 });
     await page.getByTestId('kaart-knop').click();
     const ads = page.getByTestId('achter-de-schermen');
     await expect(ads).toBeVisible();
@@ -250,7 +251,7 @@ test.describe('3 + 4. herkansing en achter de schermen', () => {
     // speel woning 6 (de kamer met de trap) via de testhaak naar de deur
     const d = await page.evaluate(() => (window as unknown as { __wijkwijs: { straat: { doors: Map<number, { stand: { x: number; z: number } }> } } }).__wijkwijs.straat.doors.get(24)!.stand);
     await page.evaluate((s) => (window as unknown as { __wijkwijs: { debugCam: (v: object) => void } }).__wijkwijs.debugCam({ x: s.x, z: s.z, yaw: 0, pitch: 0.4, dist: 6, rot: Math.PI }), d);
-    await expect(page.getByTestId('prompt')).toContainText('24', { timeout: 10_000 });
+    await expect(page.getByTestId('prompt')).toContainText('24', { timeout: 30_000 });
     await page.getByTestId('aanbellen').tap();
     const w6 = woning('w6');
     const kaart = page.getByTestId('kaart');
@@ -289,7 +290,7 @@ test.describe('3 + 4. herkansing en achter de schermen', () => {
 
 test.describe('7 + 8. leven in de straat', () => {
   test('na de finale: alle huurders in hun tuin, nr 26 bewoond, busje stopt bij geholpen woningen', async ({ page }) => {
-    test.setTimeout(240_000);
+    test.setTimeout(400_000);
     const fouten: string[] = [];
     await open(page, fouten, { 'knockknock-voortgang': voortgang(scenarios.woningen.map((w) => w.id)) });
     expect(await hook(page, (h) => h.huurdersInTuin())).toBe(7);
@@ -298,10 +299,10 @@ test.describe('7 + 8. leven in de straat', () => {
     // het busje rijdt en heeft het logo op beide zijkanten
     const logos = await page.evaluate(() => { let n = 0; (window as unknown as { __wijkwijs: { straat: { scene: { traverse: (f: (o: { name: string }) => void) => void } } } }).__wijkwijs.straat.scene.traverse((o) => { if (o.name === 'busje-logo') n++; }); return n; });
     expect(logos).toBe(2);
-    // (het kan net stilstaan voor een woning; binnen 8 s rijdt het weer)
+    // (het kan net stilstaan voor een woning; zonder GPU loopt de speltijd trager, dus ruim wachten)
     const a = await hook(page, (h) => h.busje());
     let verst = 0;
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 40 && verst <= 1; i++) {
       await page.waitForTimeout(500);
       const b = await hook(page, (h) => h.busje());
       verst = Math.max(verst, Math.hypot(b.x - a.x, b.z - a.z));
@@ -358,7 +359,7 @@ test.describe('graphics', () => {
   test('beeldkwaliteit hoog/laag via instellingen; automatisch zakt naar laag bij een trage renderer', async ({ page }) => {
     test.setTimeout(120_000);
     const fouten: string[] = [];
-    await open(page, fouten);
+    await open(page, fouten, {}, true);
     const modus = () => page.evaluate(() => (window as unknown as { __wijkwijs: { beeldModus: () => string } }).__wijkwijs.beeldModus());
     // standaard automatisch: de software-renderer van de test is te traag, dus binnen enkele seconden laag
     await expect.poll(modus, { timeout: 30_000 }).toBe('laag');

@@ -3,6 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   timeout: 90_000,
+  // zonder GPU (SwiftShader) zijn laden en renderen traag; op echte hardware gaat dit vlot
+  expect: { timeout: 15_000 },
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],

@@ -1,4 +1,6 @@
 import { LuchtLeven } from '../world/lucht';
+import { LAGE_RESOLUTIE } from '../game/versie';
+import { Rijden, type Rijdbaar } from '../player/rijden';
 import { omgevingsTijd } from '../render/detail';
 import { laadOmgeving } from '../render/omgeving';
 import { Geholpen } from '../world/geholpen';
@@ -36,7 +38,7 @@ export class StreetScene {
   private kantoorView = { pos: new THREE.Vector3(36, 3.2, 9), kijk: new THREE.Vector3(44, 3.4, 9) };
   private camGoal = { pos: new THREE.Vector3(), look: new THREE.Vector3(), lookNow: new THREE.Vector3() };
   private leven: StraatLeven;
-  private lucht: LuchtLeven;
+  private lucht: LuchtLeven | null = null;
   /** Wordt door main aangeroepen met de renderer (nodig voor het omgevingslicht). */
   onRenderer: (r: THREE.WebGLRenderer) => void = () => {};
   private deurHuurder: string | null = null;
@@ -48,6 +50,10 @@ export class StreetScene {
   beschikbaar: (w: Woning) => boolean = () => true;
   private buren: Character[] = [];
   private sleutels: { mesh: THREE.Object3D; van: THREE.Vector3; naar: THREE.Vector3; t: number } | null = null;
+  /** Zelf rijden in een geparkeerde auto (standaardversie). */
+  readonly rijden: Rijden;
+  private rijdbaar: Rijdbaar[] = [];
+  private zon!: THREE.DirectionalLight;
 
   constructor(content: Scenarios, input: Input, reducedMotion: () => boolean) {
     const s = this.scene;
@@ -97,11 +103,17 @@ export class StreetScene {
     }, s, THEME.blue);
 
     this.colliders = street.colliders;
+    this.rijden = new Rijden(street.colliders, this.camera, input);
+    street.group.traverse((o) => { if (o.userData.rijdbaar) this.rijdbaar.push(o.userData.rijdbaar as Rijdbaar); });
+    this.zon = sun;
     this.leven = new StraatLeven(s, street.colliders);
     // rook uit de schoorstenen van nr 18, 22 en 26 (schoorsteen op x = huis - 1.6, z = -5.2, top op 8.6 m)
-    this.lucht = new LuchtLeven(s, [2, 4, 6].map((i) => new THREE.Vector3(i * 6 - 1.6, 8.7, -5.2)));
-    this.lucht.resize(window.innerHeight);
-    this.onRenderer = (r) => laadOmgeving(r, s, () => { this.leven.echteLucht(); hemi.intensity = 1.05; });
+    // vogels, rook en de HDRI-lucht alleen in de standaardversie
+    if (!LAGE_RESOLUTIE) {
+      this.lucht = new LuchtLeven(s, [2, 4, 6].map((i) => new THREE.Vector3(i * 6 - 1.6, 8.7, -5.2)));
+      this.lucht.resize(window.innerHeight);
+      this.onRenderer = (r) => laadOmgeving(r, s, () => { this.leven.echteLucht(); hemi.intensity = 1.05; });
+    }
     this.geholpen = new Geholpen(s, street.colliders, street.doors, street.bewoon26);
     this.huurderLook = (id) => HUURDER_LOOK[id] ?? {};
     // het busje stopt even voor woningen die geholpen zijn
@@ -176,8 +188,45 @@ export class StreetScene {
     return route;
   }
 
+  /** Schaduwen rond de speler of de auto (de ringweg ligt buiten het vaste schaduwgebied). */
+  private volgZon(p: THREE.Vector3): void {
+    const buiten = Math.abs(p.x - 20) > 30 || p.z < -14 || p.z > 26;
+    const tx = buiten ? p.x : 20, tz = buiten ? p.z : 6;
+    this.zon.target.position.set(tx, 0, tz);
+    this.zon.position.set(tx - 38, 32, tz + 18);
+  }
+
+  /** Geparkeerde auto binnen bereik om in te stappen (of de auto waar je in zit). */
+  autoInRange(): Rijdbaar | null {
+    if (this.rijden.rijdt) return this.rijden.auto;
+    const p = this.player.position;
+    let best: Rijdbaar | null = null, bd = 3.0;
+    for (const a of this.rijdbaar) {
+      const d = Math.hypot(a.object.position.x - p.x, a.object.position.z - p.z);
+      if (d < bd) { bd = d; best = a; }
+    }
+    return best;
+  }
+
+  /** E bij een auto: instappen of uitstappen. */
+  instapUitstap(): boolean {
+    if (this.rijden.rijdt) {
+      const plek = this.rijden.uitstappen();
+      this.player.figuur.root.visible = true;
+      this.player.setPose(plek, this.player.figuur.root.rotation.y);
+      this.player.herstelCamera();
+      return true;
+    }
+    const a = this.autoInRange();
+    if (!a) return false;
+    this.player.figuur.root.visible = false;
+    this.rijden.instappen(a);
+    return true;
+  }
+
   /** Woning waarvan de deur binnen bereik is (en in de JSON staat). */
   deurInRange(): DeurInRange | null {
+    if (this.rijden.rijdt) return null;
     const p = this.player.position;
     for (const [nr, w] of this.woningPerNummer) {
       if (!this.beschikbaar(w)) continue;
@@ -302,7 +351,7 @@ export class StreetScene {
     this.markers.update(t, reducedMotion);
     if (!reducedMotion) omgevingsTijd.value += dt;
     this.leven.update(dt, this.camera, this.player.position, reducedMotion);
-    this.lucht.update(dt, t, reducedMotion);
+    this.lucht?.update(dt, t, reducedMotion);
     this.geholpen.update(dt, this.player.position, this.camera, reducedMotion);
     const v = this.vlucht;
     if (v) {
@@ -318,7 +367,15 @@ export class StreetScene {
     }
     const d = this.deurScene;
     if (!d && this.camVast) { this.player.idle(dt); return; }
-    if (!d) { this.player.update(dt); return; }
+    if (!d && this.rijden.rijdt) {
+      this.rijden.update(dt);
+      // de speler (verborgen) rijdt mee, zodat andere auto's en voorbijgangers voor je stoppen
+      const a = this.rijden.auto!.object.position;
+      this.player.position.set(a.x, 0, a.z);
+      this.volgZon(a);
+      return;
+    }
+    if (!d) { this.player.update(dt); this.volgZon(this.player.position); return; }
     this.player.idle(dt);
     d.open = Math.min(d.doel, d.open + dt * 1.4);
     const e = d.open * d.open * (3 - 2 * d.open);
@@ -343,7 +400,7 @@ export class StreetScene {
   }
 
   resize(w: number, h: number): void {
-    this.lucht.resize(h);
+    this.lucht?.resize(h);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   }

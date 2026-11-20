@@ -7,10 +7,12 @@ export interface Instellingen {
   taal: 'nl' | 'en';
   /** Beeldkwaliteit: auto zakt naar laag als de framerate te laag is. */
   kwaliteit: 'auto' | 'hoog' | 'laag';
+  /** Standaard of lage resolutie (het eerdere beeld); geldt na opnieuw laden. */
+  versie: 'standaard' | 'laag';
 }
 
 const KEY = 'wijkwijs-instellingen';
-const STANDAARD: Instellingen = { geluid: true, voiceOver: true, minderBeweging: null, taal: 'nl', kwaliteit: 'auto' };
+const STANDAARD: Instellingen = { geluid: true, voiceOver: true, minderBeweging: null, taal: 'nl', kwaliteit: 'auto', versie: 'standaard' };
 
 export class Settings {
   waarden: Instellingen;

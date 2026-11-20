@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { THEME, WORLD } from '../theme';
-import { MODELLEN, type Kapsel, type Outfit } from '../assets/modellen';
+import { LAGE_RESOLUTIE } from '../game/versie';
+import { MODELLEN, type Kapsel, type Mens, type Outfit } from '../assets/modellen';
 
 /** Kledingdelen die je per personage een kleur geeft. */
 export type Slot = 'huid' | 'haar' | 'shirt' | 'binnen' | 'das' | 'broek' | 'schoenen' | 'zool' | 'accent' | 'ogen';
@@ -18,6 +19,8 @@ export interface Look {
   lengte?: number;
   /** Ander kapsel: het hoofd van een ander model (zelfde skelet). */
   kapsel?: Kapsel;
+  /** Realistisch personage (Rocketbox); gaat voor outfit, valt terug op outfit als het niet geladen is. */
+  mens?: Mens;
 }
 const DEFAULT_LOOK: Look = { shirt: THEME.blue, skin: WORLD.skin[0], hair: THEME.navy, trousers: WORLD.trousers };
 
@@ -62,6 +65,10 @@ interface Rig {
    * zouden de aanpassingen zich bij een (bijna) stilstaande animatie opstapelen.
    */
   schoon: { bot: THREE.Bone; q: THREE.Quaternion; p: THREE.Vector3 }[];
+  /** Loopsnelheid (m/s) waarbij de loop- en renanimatie zonder glijden passen. */
+  tempo: { walk: number; run: number };
+  /** Rocketbox: zitten en praten zijn echte animaties (geen houding in code). */
+  mens: boolean;
 }
 
 /**
@@ -78,6 +85,8 @@ export class Character {
   private legL!: THREE.Object3D; private legR!: THREE.Object3D;
   private armL!: THREE.Object3D; private armR!: THREE.Object3D;
   private phase = 0;
+  /** Praat (gebaren) in plaats van stil staan; alleen bij Rocketbox-personages. */
+  praat = false;
   /** Zittend aan een bureau (benen naar voren, handen op het toetsenbord). */
   zit = false;
   /** Punt (wereld) waar het hoofd naar kijkt, of null. Het hoofd draait zacht mee, binnen grenzen. */
@@ -90,6 +99,7 @@ export class Character {
   constructor(look: Partial<Look> = {}) {
     const l: Look = { ...DEFAULT_LOOK, ...look };
     this.root.add(this.body);
+    if (l.mens && this.bouwMens(l)) return;
     if (!(l.outfit && this.bouwModel(l))) this.bouwPrimitief(l);
   }
 
@@ -189,10 +199,55 @@ export class Character {
       const schoon = [...ZIT.map(([n]) => bones.get(n)), ...voeten.map((v) => v.voet), bones.get('Head')]
         .filter((b): b is THREE.Bone => !!b)
         .map((bot) => ({ bot, q: bot.quaternion.clone(), p: bot.position.clone() }));
-      this.rig = { mixer, acties, bones, voeten, schoon };
+      this.rig = { mixer, acties, bones, voeten, schoon, tempo: { walk: WALK_ANIM, run: RUN_ANIM }, mens: false };
       return true;
     } catch (e) {
       console.warn('Personage valt terug op primitieven', e);
+      return false;
+    }
+  }
+
+  // ---------------- Rocketbox (realistisch) ----------------
+
+  private bouwMens(l: Look): boolean {
+    const gltf = MODELLEN.mensen.get(l.mens!);
+    const clips = MODELLEN.mensClips.get(l.mens!.startsWith('f') ? 'f' : 'm');
+    if (!gltf || !clips?.size) return false;
+    try {
+      const scene = SkeletonUtils.clone(gltf.scene) as THREE.Object3D;
+      scene.traverse((o) => {
+        const m = o as THREE.SkinnedMesh;
+        if (m.isSkinnedMesh) { m.castShadow = true; m.frustumCulled = false; }
+      });
+      scene.updateMatrixWorld(true);
+      // lengte zonder haar: het hoofdbot ligt ~10 cm onder de kruin
+      const bones = new Map<string, THREE.Bone>();
+      scene.traverse((o) => { if ((o as THREE.Bone).isBone) bones.set(o.name, o as THREE.Bone); });
+      const hoofd = [...bones.values()].find((b) => /Head$/.test(b.name));
+      if (hoofd) bones.set('Head', hoofd);
+      const box = new THREE.Box3().setFromObject(scene);
+      const h = box.max.y - box.min.y;
+      const lengte = l.lengte ?? (l.mens!.startsWith('f') ? 1.7 : 1.8);
+      scene.scale.multiplyScalar(lengte / h);
+      this.body.add(scene);
+      const mixer = new THREE.AnimationMixer(scene);
+      const acties = new Map<string, THREE.AnimationAction>();
+      const voeg = (naam: string, clip: THREE.AnimationClip | undefined) => {
+        if (!clip) return;
+        const a = mixer.clipAction(clip);
+        a.enabled = true; a.setEffectiveWeight(0); a.play();
+        acties.set(naam, a);
+      };
+      for (const [naam, clip] of clips) voeg(naam, clip);
+      // binnen dezelfde rustanimatie (een eigen kopie, anders deelt hij de actie)
+      const idle = clips.get('Idle');
+      if (idle) { const c = idle.clone(); c.name = 'Idle_Neutral'; voeg('Idle_Neutral', c); }
+      mixer.setTime(Math.random() * 3);
+      const schoon = hoofd ? [{ bot: hoofd, q: hoofd.quaternion.clone(), p: hoofd.position.clone() }] : [];
+      this.rig = { mixer, acties, bones, voeten: [], schoon, tempo: l.mens!.startsWith('f') ? { walk: 1.22, run: 2.75 } : { walk: 1.01, run: 2.89 }, mens: true };
+      return true;
+    } catch (e) {
+      console.warn('Rocketbox-personage valt terug', e);
       return false;
     }
   }
@@ -222,19 +277,22 @@ export class Character {
     }
     const zit = this.zit;
     const loop = zit ? 0 : THREE.MathUtils.smoothstep(speed, 0.15, 1.0);
-    const ren = THREE.MathUtils.smoothstep(speed, 3.8, 5.8);
+    // Rocketbox loopt op echte snelheid (±1,1 m/s): daarboven jogt hij; Quaternius loopt snel
+    const ren = this.rig!.mens ? THREE.MathUtils.smoothstep(speed, 1.7, 2.6) : THREE.MathUtils.smoothstep(speed, 3.8, 5.8);
     const rest = 1 - loop;
-    for (const n of ['Idle', 'Idle_Neutral', 'Walk', 'Run', 'Wave', 'Interact']) w(n, 0);
-    w(this.basis, rest * (1 - e));
+    for (const n of ['Idle', 'Idle_Neutral', 'Walk', 'Run', 'Wave', 'Interact', 'Sit', 'Talk']) w(n, 0);
+    const mensZit = zit && this.rig!.mens && acties.has('Sit');
+    w(mensZit ? 'Sit' : this.praat && acties.has('Talk') ? 'Talk' : this.basis, rest * (1 - e));
     w('Walk', loop * (1 - ren) * (1 - e));
     w('Run', loop * ren * (1 - e));
     if (em && this.eenmalig) w(em.naam, e);
     const walk = acties.get('Walk'), run = acties.get('Run');
     if (walk && run) {
-      walk.timeScale = THREE.MathUtils.clamp(speed / WALK_ANIM, 0.7, 2.1);
-      run.timeScale = THREE.MathUtils.clamp(speed / RUN_ANIM, 0.8, 1.5);
+      walk.timeScale = THREE.MathUtils.clamp(speed / this.rig!.tempo.walk, 0.7, 2.1);
+      run.timeScale = THREE.MathUtils.clamp(speed / this.rig!.tempo.run, 0.8, this.rig!.mens ? 2.1 : 1.5);
       // zelfde fase, zodat overvloeien niet hapert
-      run.time = (walk.time / walk.getClip().duration) * run.getClip().duration;
+      if (ren > 0.5) walk.time = (run.time / run.getClip().duration) * walk.getClip().duration;
+      else run.time = (walk.time / walk.getClip().duration) * run.getClip().duration;
       // voetstappen op twee momenten per loopcyclus
       const f = (walk.time / walk.getClip().duration) % 1;
       const half = Math.floor(f * 2);
@@ -245,9 +303,10 @@ export class Character {
     for (const s of this.rig!.schoon) { s.bot.quaternion.copy(s.q); s.bot.position.copy(s.p); }
     mixer.update(dt);
     for (const s of this.rig!.schoon) { s.q.copy(s.bot.quaternion); s.p.copy(s.bot.position); }
-    this.body.position.y = zit ? ZIT_HOOGTE : 0;
+    this.body.position.y = zit && !mensZit ? ZIT_HOOGTE : zit ? MENS_ZIT.y : 0;
+    this.body.position.z = mensZit ? MENS_ZIT.z : 0;
     this.hoofdDraaien(dt, bones.get('Head'));
-    if (zit) {
+    if (zit && !mensZit) {
       zitHouding(bones, this.root, (this.phase += dt));
       // voeten aan het eind van het (gedraaide) onderbeen zetten
       for (const { onder, voet, offset } of this.rig!.voeten) {
@@ -374,6 +433,8 @@ export const ZIT: [string, number][] = [
 
 /** Zo veel zakt het lichaam (m) als het personage zit. */
 export const ZIT_HOOGTE = -0.3;
+/** Rocketbox-zitanimatie: verschuiving van het lichaam zodat het zitvlak op de stoel valt. */
+export const MENS_ZIT = { y: 0, z: 0 };
 
 // ---------------- samenvoegen tot één SkinnedMesh ----------------
 
@@ -454,6 +515,7 @@ function samenvoegen(meshes: THREE.SkinnedMesh[], kleurVan: KleurVan, acc: { soo
       }
     }
   }
+  if (!LAGE_RESOLUTIE) zachteNormalen(P, N, 60);
   if (acc.length) voegAccessoiresToe(acc, skel, { P, N, C, SI, SW });
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
@@ -468,6 +530,36 @@ function samenvoegen(meshes: THREE.SkinnedMesh[], kleurVan: KleurVan, acc: { soo
 }
 
 interface Buf { P: number[]; N: number[]; C: number[]; SI: number[]; SW: number[] }
+
+/**
+ * Zachtere personages: de Quaternius-modellen hebben platte vlakken (facetten). Normalen van
+ * vertices op dezelfde plek worden gemiddeld als ze minder dan `hoek` graden verschillen;
+ * scherpe randen (kraag, schoenzool, haarlok) blijven scherp. Geen extra driehoeken.
+ */
+function zachteNormalen(P: number[], N: number[], hoek: number): void {
+  const grens = Math.cos((hoek * Math.PI) / 180);
+  const q = (x: number) => Math.round(x * 2000);
+  const plek = new Map<string, number[]>();
+  for (let i = 0; i < P.length / 3; i++) {
+    const k = `${q(P[i * 3])},${q(P[i * 3 + 1])},${q(P[i * 3 + 2])}`;
+    const l = plek.get(k);
+    if (l) l.push(i); else plek.set(k, [i]);
+  }
+  const uit = N.slice();
+  for (const l of plek.values()) {
+    if (l.length < 2) continue;
+    for (const i of l) {
+      let x = 0, y = 0, z = 0;
+      for (const j of l) {
+        const d = N[i * 3] * N[j * 3] + N[i * 3 + 1] * N[j * 3 + 1] + N[i * 3 + 2] * N[j * 3 + 2];
+        if (d >= grens) { x += N[j * 3]; y += N[j * 3 + 1]; z += N[j * 3 + 2]; }
+      }
+      const len = Math.hypot(x, y, z) || 1;
+      uit[i * 3] = x / len; uit[i * 3 + 1] = y / len; uit[i * 3 + 2] = z / len;
+    }
+  }
+  for (let i = 0; i < N.length; i++) N[i] = uit[i];
+}
 
 /**
  * Accessoires in bind-ruimte. Maten zijn afgeleid van de hoofdvertices

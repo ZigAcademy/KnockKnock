@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Detail } from '../render/detail';
 import { StaticBuilder } from './builder';
 import { boxCollider, type Collider } from './collision';
 import { textTexture } from './labels';
@@ -6,6 +7,15 @@ import { THEME, WORLD } from '../theme';
 import { bouwStraatDecor, WONING_DETAILS, ZEBRA_X, lantaarnPalet } from './straatDecor';
 import { natuurPalet } from './paletten';
 import { RaamBouwer, RaamStijl } from './ramen';
+import { Beplanting } from './beplanting';
+import { kitModel } from '../assets/modellen';
+import { hegBlaadjes } from './heg';
+import { hegStukken, grasPlakken, hegDichtbij, heeftHegModel } from './groen';
+import { fietsMesh } from './fiets';
+import { bouwRingweg } from './ringweg';
+import { bouwAankleding } from './aankleding';
+import type { Gevel } from './achtergrond';
+import { LAGE_RESOLUTIE } from '../game/versie';
 import { woordmerkMateriaal, icoonMateriaal, WOORDMERK_VERHOUDING } from './logos';
 
 /** Huisnummers van de Lindelaan in het spel (rijtjes, even kant). */
@@ -51,10 +61,15 @@ const houseX = (i: number) => i * LAYOUT.houseWidth;
 const DOOR_OFFSET = 1.5;
 
 export function buildStreet(): Street {
-  const b = new StaticBuilder({ buiten: true });
+  const beplanting = new Beplanting();
+  const b = new StaticBuilder({ buiten: true, beplanting, hegZonderKern: !LAGE_RESOLUTIE && heeftHegModel() ? hegDichtbij : undefined });
   const colliders: Collider[] = [];
   const doors = new Map<number, DoorInfo>();
   const group = new THREE.Group();
+  // losse (getextureerde of gladde) objecten: realistische auto's en fietsen
+  const losseObjecten = new THREE.Group();
+  losseObjecten.name = 'losse-objecten';
+  group.add(losseObjecten);
   const W = LAYOUT.houseWidth, D = LAYOUT.houseDepth, H = LAYOUT.wallHeight;
   const rowMinX = houseX(0) - W / 2, rowMaxX = houseX(HUISNUMMERS.length - 1) + W / 2;
   const [snA, snB] = LAYOUT.sidewalkNear, [rA, rB] = LAYOUT.road, [sfA, sfB] = LAYOUT.sidewalkFar;
@@ -100,8 +115,24 @@ export function buildStreet(): Street {
     const roof = new THREE.ExtrudeGeometry(shape, { depth: W, bevelEnabled: false });
     roof.rotateY(-Math.PI / 2);
     roof.translate(cx + W / 2, H, 0);
-    b.add(roof, i % 2 ? WORLD.roof : WORLD.roofEdge);
+    b.add(roof, i % 2 ? WORLD.roof : WORLD.roofAlt);
     if (i % 2 === 0) b.box(0.7, 1.6, 0.7, cx - 1.6, H + 1.4, -5.2, brick);
+    // achtergevel (zichtbaar vanuit het park achter de huizen): achterdeur en ramen
+    if (!LAGE_RESOLUTIE) {
+      const zb = -D - 0.04, sp = i % 2 ? -1 : 1;
+      const raamAchter = (w: number, h: number, x: number, y: number) => {
+        b.box(w, h, 0.08, x, y, zb, WORLD.frame);
+        b.box(w - 0.16, h - 0.16, 0.1, x, y + 0.08, zb - 0.01, '#2F3A47');
+        b.box(0.06, h - 0.16, 0.12, x, y + 0.08, zb - 0.02, WORLD.frame);
+        b.box(w + 0.15, 0.08, 0.2, x, y - 0.06, zb - 0.08, WORLD.frame);
+      };
+      b.box(1.1, 2.3, 0.1, cx + sp * 1.7, 0, zb, WORLD.frame);
+      b.box(0.9, 2.15, 0.12, cx + sp * 1.7, 0.05, zb - 0.01, doorColor);
+      raamAchter(2.2, 1.5, cx - sp * 0.9, 0.85);
+      raamAchter(1.3, 1.2, cx - sp * 1.6, 3.6);
+      raamAchter(1.3, 1.2, cx + sp * 1.3, 3.6);
+      b.box(W, 0.12, 0.1, cx, 2.95, -D - 0.05, WORLD.frame);
+    }
 
     // deur met kozijn en stoepje
     const dx = cx + DOOR_OFFSET;
@@ -148,7 +179,7 @@ export function buildStreet(): Street {
     for (const [a, c] of [segA, segB]) {
       if (c - a < 0.2) continue;
       // sommige tuinen hebben een laag houten hekje in plaats van een heg
-      if (hekje && b.model('natuur', 'hek', { x: (a + c) / 2, y: 0.07, z: hz, w: c - a }, natuurPalet())) {
+      if (hekje && b.model('natuur', 'hek', { x: (a + c) / 2, y: 0.07, z: hz, w: c - a }, natuurPalet(), { detail: Detail.Hout })) {
         b.box(c - a, 0.06, 0.08, (a + c) / 2, 0.07, hz, '#7E6249');
       } else b.box(c - a, 0.8, 0.5, (a + c) / 2, 0, hz, WORLD.hedge);
       colliders.push(boxCollider(a, c, hz - 0.25, hz + 0.25, 0.8, false));
@@ -198,8 +229,9 @@ export function buildStreet(): Street {
   // trappenhuistoren aan de kant van de huizen
   // de toren steekt 0,4 m vóór de gevel uit (anders vallen de gevels samen en flikkeren ze)
   const tx0 = off.minX - 0.4;
-  b.box(4.4, 10.2, 5.2, tx0 + 2.2, 0, off.minZ + 2.6, KANTOOR.toren);
-  b.box(4.6, 0.3, 5.4, tx0 + 2.2, 10.2, off.minZ + 2.6, KANTOOR.donker);
+  // ook aan de zijkant 0,15 m buiten de gevel (zichtbaar vanaf de ringweg)
+  b.box(4.4, 10.2, 5.5, tx0 + 2.2, 0, off.minZ + 2.6 - 0.15, KANTOOR.toren);
+  b.box(4.6, 0.3, 5.7, tx0 + 2.2, 10.2, off.minZ + 2.6 - 0.15, KANTOOR.donker);
   colliders.push(boxCollider(tx0, off.minX, off.minZ, off.minZ + 5.2, 10.2));
   // trappenhuis: smalle, hoge ramen met donkere neggen
   for (let y = 1.0; y < 6.5; y += 2.6) {
@@ -240,6 +272,25 @@ export function buildStreet(): Street {
     b.model('natuur', ['struik', 'struik-groot', 'gras'][Math.round(z) % 3], { x: off.minX + 0.6 + (Math.round(z * 3) % 2) * 0.3, y: 7.95, z, w: 0.9 }, natuurPalet(['#6A8A57', '#73915E'][Math.round(z) % 2]));
   }
   colliders.push(boxCollider(off.minX, off.maxX, off.minZ, off.maxZ, 8.4));
+  // achter- en zijgevels (zichtbaar vanaf de ringweg): ramen met donkere neggen, net als voor
+  if (!LAGE_RESOLUTIE) {
+    const raamBox = (w: number, h: number, x: number, y: number, z: number, langsX: boolean, n: number) => {
+      const [bw, bd] = langsX ? [w, 0.1] : [0.1, w];
+      b.box(bw + (langsX ? 0.24 : 0.04), h + 0.24, bd + (langsX ? 0.04 : 0.24), x, y - 0.12, z, KANTOOR.donker);
+      b.box(bw, h, bd + 0.02, x + (langsX ? 0 : n * 0.02), y, z + (langsX ? n * 0.02 : 0), '#2F3A47');
+      b.box(langsX ? 0.08 : 0.14, h, langsX ? 0.14 : 0.08, x + (langsX ? 0 : n * 0.04), y, z + (langsX ? n * 0.04 : 0), WORLD.frame);
+      b.box(langsX ? w + 0.1 : 0.2, 0.08, langsX ? 0.2 : w + 0.1, x + (langsX ? 0 : n * 0.06), y - 0.12, z + (langsX ? n * 0.06 : 0), '#C9C6BE');
+    };
+    for (const [y, h] of [[1.25, 2.0], [4.55, 2.4]] as const) {
+      // achtergevel (oostkant)
+      for (let z = off.minZ + 2; z < off.maxZ - 1.2; z += 3) raamBox(2.2, h, off.maxX + 0.05, y, z, false, 1);
+      // zijgevels (noord en zuid); aan de noordkant niet achter de toren
+      for (let x = off.minX + 2; x < off.maxX - 1.2; x += 3) {
+        if (x > off.minX + 5) raamBox(2.2, h, x, y, off.minZ - 0.05, true, -1);
+        raamBox(2.2, h, x, y, off.maxZ + 0.05, true, 1);
+      }
+    }
+  }
   // ---------- Huisstijl van de corporatie op de gevel ----------
   // Lichtbak met het woordmerk boven de entree (navy rand), een uithangbord met het icoon
   // haaks op de gevel, en het icoon groot op de trappenhuistoren. NL/EN wisselen mee.
@@ -319,6 +370,13 @@ export function buildStreet(): Street {
   b.box(fw, 1.6, 0.06, fx, 0.3, fz + fd / 2, WORLD.officeDark);
   for (let k = 0; k < 5; k++) {
     const bx = fx - fw / 2 + 0.8 + k * 1.1;
+    if (!LAGE_RESOLUTIE) {
+      // echte fietsen in het rek, voorwiel naar de achterwand
+      const f = fietsMesh(['#3E4A5C', '#6B2F2F', '#2F4A3A', '#1E1F22', '#8C8F94'][k], k === 2 ? 'fiets-mtb' : 'fiets-retro');
+      f.position.set(bx, 0, fz - 0.05); f.rotation.y = -Math.PI / 2 + (k % 2 ? 0.04 : -0.03);
+      losseObjecten.add(f);
+      continue;
+    }
     for (const wz of [-0.55, 0.55]) {
       const wheel = new THREE.TorusGeometry(0.32, 0.04, 4, 10);
       wheel.rotateY(Math.PI / 2); wheel.translate(bx, 0.36, fz + wz);
@@ -328,10 +386,30 @@ export function buildStreet(): Street {
     b.box(0.05, 0.4, 0.05, bx, 0.6, fz - 0.35, WORLD.doors[k]);
   }
   colliders.push(boxCollider(fx - fw / 2 - 0.2, fx + fw / 2 + 0.2, fz - fd / 2 - 0.2, fz + fd / 2 + 0.2, 2.4));
+  // fietspaaltjes met fietsbord aan weerszijden van de stalling ("Bike Rack #4", aecoviz, CC BY 4.0)
+  const paal = LAGE_RESOLUTIE ? null : kitModel('fietsen', 'fietsenrek');
+  if (paal) for (const px of [fx - fw / 2 - 0.5, fx + fw / 2 + 0.5]) {
+    const p = paal.clone(true);
+    p.position.set(px, 0, fz - fd / 2 + 0.2);
+    p.traverse((o: THREE.Object3D) => { o.castShadow = true; o.receiveShadow = true; });
+    losseObjecten.add(p);
+    colliders.push(boxCollider(px - 0.25, px + 0.25, fz - fd / 2 + 0.05, fz - fd / 2 + 0.35, 1, false));
+  }
 
   // ---------- Randen ----------
-  b.box(0.8, 1.2, 26, LAYOUT.westEnd - 0.4, 0, 9, WORLD.hedge);
-  colliders.push(boxCollider(LAYOUT.westEnd - 0.8, LAYOUT.westEnd, -10, 30, 1.2, false));
+  let gevels: Gevel[] = [];
+  if (LAGE_RESOLUTIE) {
+    b.box(0.8, 1.2, 26, LAYOUT.westEnd - 0.4, 0, 9, WORLD.hedge);
+    colliders.push(boxCollider(LAYOUT.westEnd - 0.8, LAYOUT.westEnd, -10, 30, 1.2, false));
+  } else {
+    // standaardversie: de heg aan de westkant gaat open voor de weg naar de ringweg
+    const [s0, s1] = [snA - 0.1, sfB + 0.1];
+    b.box(0.8, 1.2, s0 + 4, LAYOUT.westEnd - 0.4, 0, (s0 - 4) / 2, WORLD.hedge);
+    b.box(0.8, 1.2, 22 - s1, LAYOUT.westEnd - 0.4, 0, (s1 + 22) / 2, WORLD.hedge);
+    colliders.push(boxCollider(LAYOUT.westEnd - 0.8, LAYOUT.westEnd, -10, s0, 1.2, false));
+    colliders.push(boxCollider(LAYOUT.westEnd - 0.8, LAYOUT.westEnd, s1, 30, 1.2, false));
+    gevels = bouwRingweg(b, colliders);
+  }
   b.box(off.minX - LAYOUT.westEnd, 1.2, 0.8, (off.minX + LAYOUT.westEnd) / 2, 0, LAYOUT.southEnd + 0.4, WORLD.hedge);
   colliders.push(boxCollider(LAYOUT.westEnd - 1, off.maxX + 1, LAYOUT.southEnd, LAYOUT.southEnd + 1, 1.2, false));
   colliders.push(boxCollider(LAYOUT.westEnd - 1, rowMinX - 0.2, -10, -D, 3, false));
@@ -339,9 +417,28 @@ export function buildStreet(): Street {
 
   bouwStraatDecor({
     b, colliders, houseX, aantal: HUISNUMMERS.length, doorOffset: DOOR_OFFSET,
-    gardenDepth: LAYOUT.gardenDepth, houseDepth: D, wallHeight: H,
+    gardenDepth: LAYOUT.gardenDepth, houseDepth: D, wallHeight: H, extra: losseObjecten,
   });
+  if (!LAGE_RESOLUTIE) bouwAankleding({ b, beplanting, losse: losseObjecten, colliders, gevels, huizen: HUISNUMMERS.slice(0, -1).map((_, i) => houseX(i)) });
   group.add(b.build());
+  // standaardversie: graspollen op de gazons en in het park, losse blaadjes langs de heggen
+  if (!LAGE_RESOLUTIE) {
+    const gazons = b.gazons.map((g): [number, number, number, number, number] => [g.min.x + 0.15, g.min.z + 0.15, g.max.x - 0.15, g.max.z - 0.15, g.max.y]);
+    // echte grasplukken in de voortuinen (anders graspollen), graspollen in het park
+    // niet in heggen, paden, plantenbakken, kliko's, fietsen of andere obstakels
+    const vrij = [...b.paden, ...b.obstakels, ...losseObjecten.children.map((o) => new THREE.Box3().setFromObject(o).expandByScalar(0.03)).filter((bx) => bx.max.x - bx.min.x < 6 && bx.max.z - bx.min.z < 6)];
+    // alleen de voortuinen in de straat (die langs de ring houden het getextureerde gazon)
+    const straatGazons = b.gazons.filter((g) => g.min.x > -17 && g.max.x < 61 && g.min.z > -2 && g.max.z < 6);
+    const plakken = grasPlakken(straatGazons, vrij, b.heggen);
+    if (plakken) group.add(plakken); else beplanting.graspollen(gazons.filter((_, i) => b.gazons[i].max.z < 6 && b.gazons[i].min.x > -17 && b.gazons[i].max.x < 61), 6, b.paden);
+    // (het park heeft de grastextuur; losse graspollen kostten te veel driehoeken)
+    // echte heg (model) of anders losse blaadjes op de heg-dozen
+    // alleen de heggen in en rond de straat als echt model; die langs de ring blijven een getextureerde doos
+    const inBlok = b.heggen.filter((h) => h.min.x > -17 && h.max.x < 61 && h.min.z > -12 && h.max.z < 26);
+    const heg = hegStukken(inBlok) ?? hegBlaadjes(inBlok, WORLD.hedge);
+    if (heg) group.add(heg);
+  }
+  group.add(beplanting.bouw());
   const ramenMesh = ramen.build();
   group.add(ramenMesh);
 

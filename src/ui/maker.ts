@@ -1,7 +1,7 @@
 import { t, label } from '../i18n';
 import * as THREE from 'three';
 import { Character } from '../player/character';
-import { HAARKLEUREN, HAARNAMEN, HUIDNAMEN, HUIDTINTEN, KAPSELS, KLEDINGNAMEN, lookVan, willekeurigeKeuze, type SpelerKeuze } from '../game/speler';
+import { HAARKLEUREN, HAARNAMEN, HUIDNAMEN, HUIDTINTEN, KAPSELS, KLEDINGNAMEN, SPELER_MENSEN, heeftMensen, lookVan, willekeurigeKeuze, type SpelerKeuze } from '../game/speler';
 import { THEME } from '../theme';
 
 /**
@@ -91,7 +91,13 @@ export class SpelerMaker {
     const teken = () => {
       const focusNaam = (document.activeElement as HTMLInputElement | null)?.name;
       keuzes.innerHTML = '';
-      groep('figuur', t('figuur'), [{ label: t('man') }, { label: t('vrouw') }], k.figuur === 'man' ? 0 : 1, (i) => { k.figuur = i ? 'vrouw' : 'man'; });
+      groep('figuur', t('figuur'), [{ label: t('man') }, { label: t('vrouw') }], k.figuur === 'man' ? 0 : 1, (i) => { k.figuur = i ? 'vrouw' : 'man'; k.mens = Math.min(k.mens, SPELER_MENSEN[k.figuur].length - 1); });
+      if (heeftMensen()) {
+        // realistische personages: kies een van de figuren
+        groep('mens', t('personage'), SPELER_MENSEN[k.figuur].map((x) => ({ label: label(x.naam) })), k.mens, (i) => { k.mens = i; });
+        if (focusNaam) keuzes.querySelector<HTMLInputElement>(`input[name="${focusNaam}"]:checked`)?.focus();
+        return;
+      }
       groep('huid', t('huidskleur'), HUIDTINTEN.map((c, i) => ({ label: label(HUIDNAMEN[i]), kleur: c })), k.huid, (i) => { k.huid = i; });
       groep('kapsel', t('kapsel'), KAPSELS[k.figuur].map((x) => ({ label: label(x.naam) })), k.kapsel, (i) => { k.kapsel = i; k.hoofddoek = false; });
       groep('haar', t('haarkleur'), [...HAARKLEUREN.map((c, i) => ({ label: label(HAARNAMEN[i]), kleur: c })), { label: t('hoofddoek'), kleur: '#2C3850' }],

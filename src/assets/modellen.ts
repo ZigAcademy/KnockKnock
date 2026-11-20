@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { LAGE_RESOLUTIE } from '../game/versie';
 import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
@@ -13,7 +14,10 @@ export type Outfit = typeof OUTFITS[number];
 /** Losse hoofden (kapsels), passend op elk lichaam. */
 export const KAPSELS = ['man-krul', 'man-kort', 'man-scheiding', 'man-lang', 'man-golf', 'vrouw-bob', 'vrouw-opgestoken', 'vrouw-pixie', 'vrouw-staart', 'vrouw-kort'] as const;
 export type Kapsel = typeof KAPSELS[number];
-export const KITS = ['autos', 'straat', 'natuur', 'meubels', 'eten', 'gebouwen'] as const;
+/** Realistische personages (Microsoft Rocketbox, MIT; tools/rocketbox.mjs). Eerste letter = sekse van de animaties. */
+export const MENSEN = ['f01', 'f03', 'f06', 'f08', 'f09', 'f11', 'f13', 'f15', 'fb1', 'fb2', 'm03', 'm04', 'm05', 'm06', 'm08', 'm09', 'm12', 'm13', 'm16', 'mb2', 'mb5', 'mm3'] as const;
+export type Mens = typeof MENSEN[number];
+export const KITS = ['autos', 'straat', 'natuur', 'meubels', 'eten', 'gebouwen', 'planten', 'voertuigen', 'fietsen', 'groen', 'props'] as const;
 export type KitNaam = typeof KITS[number];
 
 interface Register {
@@ -22,9 +26,11 @@ interface Register {
   clips: Map<string, THREE.AnimationClip>;
   kits: Map<KitNaam, Map<string, THREE.Object3D>>;
   dieren: Map<string, GLTF>;
+  mensen: Map<string, GLTF>;
+  mensClips: Map<string, Map<string, THREE.AnimationClip>>;
 }
 
-export const MODELLEN: Register = { personages: new Map(), hoofden: new Map(), clips: new Map(), kits: new Map(), dieren: new Map() };
+export const MODELLEN: Register = { personages: new Map(), hoofden: new Map(), clips: new Map(), kits: new Map(), dieren: new Map(), mensen: new Map(), mensClips: new Map() };
 
 const url = (rel: string) => new URL(`assets/modellen/${rel}`, document.baseURI).href;
 
@@ -36,8 +42,10 @@ export async function laadModellen(voortgang: (f: number) => void = () => {}): P
     ...OUTFITS.map((o): [string, (g: GLTF) => void] => [`personages/${o}.glb`, (g) => MODELLEN.personages.set(o, g)]),
     ...KAPSELS.map((k): [string, (g: GLTF) => void] => [`personages/hoofd-${k}.glb`, (g) => MODELLEN.hoofden.set(k, g)]),
     ['personages/anim.glb', (g) => g.animations.forEach((c) => MODELLEN.clips.set(c.name, c))],
+    ...(LAGE_RESOLUTIE ? [] : MENSEN).map((m): [string, (g: GLTF) => void] => [`mensen/${m}.glb`, (g) => MODELLEN.mensen.set(m, g)]),
+    ...(LAGE_RESOLUTIE ? [] : ['f', 'm']).map((s): [string, (g: GLTF) => void] => [`mensen/anim-${s}.glb`, (g) => MODELLEN.mensClips.set(s, new Map(g.animations.map((c) => [c.name, c])))]),
     ['dieren/hond.glb', (g) => MODELLEN.dieren.set('hond', g)],
-    ...KITS.map((k): [string, (g: GLTF) => void] => [`${k}.glb`, (g) => {
+    ...KITS.filter((k) => !(LAGE_RESOLUTIE && ['planten', 'voertuigen', 'fietsen', 'groen', 'props'].includes(k))).map((k): [string, (g: GLTF) => void] => [`${k}.glb`, (g) => {
       const m = new Map<string, THREE.Object3D>();
       for (const c of g.scene.children) m.set(c.name, c);
       MODELLEN.kits.set(k, m);

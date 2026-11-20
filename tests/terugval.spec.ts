@@ -9,7 +9,7 @@ test('zonder modellen blijft het spel speelbaar (terugval)', async ({ page }) =>
   page.on('pageerror', (e) => fouten.push(String(e)));
   await page.route('**/assets/modellen/**', (r) => r.abort());
   await page.goto('/');
-  await expect(page.getByTestId('titelscherm')).toBeVisible();
+  await expect(page.getByTestId('titelscherm')).toBeVisible({ timeout: 60_000 });
   await begin(page);
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${SHOTS}/50-terugval-straat.png` });

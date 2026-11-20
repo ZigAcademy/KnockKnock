@@ -22,12 +22,18 @@ export const hook = <T>(page: Page, fn: (h: Hook) => T) =>
 export function woning(id: string): Woning { return scenarios.woningen.find((w) => w.id === id)!; }
 export const nummerVan = (w: Woning) => Number(w.adres.match(/(\d+)\s*$/)![1]);
 
-export async function startGame(page: Page, errors: string[], url = '/') {
+export async function startGame(page: Page, errors: string[], url = '/', kwaliteitVrij = false) {
+  if (!kwaliteitVrij) await laagInTest(page);
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto(url);
-  await expect(page.getByTestId('titelscherm')).toBeVisible();
+  await expect(page.getByTestId('titelscherm')).toBeVisible({ timeout: 60_000 });
   await expect(page.locator('#app canvas')).toBeVisible();
+}
+
+/** De testbrowser heeft geen GPU: beeldkwaliteit laag (zonder nabewerking), tenzij de test zelf iets instelt. */
+export async function laagInTest(page: Page) {
+  await page.addInitScript(() => { try { const k = 'wijkwijs-instellingen'; const s = JSON.parse(localStorage.getItem(k) ?? '{}'); if (!s.kwaliteit) localStorage.setItem(k, JSON.stringify({ ...s, kwaliteit: 'laag' })); } catch { /* */ } });
 }
 
 /** "Wie ben jij?": verschijnt bij de eerste start (zonder bewaarde keuze). */
@@ -53,7 +59,7 @@ export async function loopNaar(page: Page, nr: number) {
   expect(p!.x > 0 && p!.x < vp.width && p!.y > 0 && p!.y < vp.height, `tuinpad ${nr} in beeld`).toBe(true);
   await page.mouse.click(p!.x, p!.y);
   const prompt = page.getByTestId('prompt');
-  await expect(prompt).toContainText(`${nr}`, { timeout: 30_000 });
+  await expect(prompt).toContainText(`${nr}`, { timeout: 90_000 });
 }
 
 /** Huurderfase met muis (alle pins), daarna gesprek met optie 1. */
@@ -87,7 +93,7 @@ export async function speelCorporatiefase(page: Page, w: Woning, shot?: (naam: s
   await shot?.('wissel');
   for (const deel of w.corporatiefase) {
     const m = scenarios.personages.medewerkers.find((x) => x.id === deel.medewerker)!;
-    await expect(kaart).toContainText(deel.intro.nl, { timeout: 15_000 });
+    await expect(kaart).toContainText(deel.intro.nl, { timeout: 45_000 });
     await expect(kaart).toContainText(m.naam);
     await shot?.(`intro-${m.id}`);
     await page.getByTestId('kaart-knop').click();
@@ -118,13 +124,13 @@ export async function speelCorporatiefase(page: Page, w: Woning, shot?: (naam: s
     }
   }
   if (w.afloop) {
-    await expect(kaart).toContainText(w.afloop.nl, { timeout: 15_000 });
+    await expect(kaart).toContainText(w.afloop.nl, { timeout: 45_000 });
     await shot?.('afloop');
     await page.getByTestId('kaart-knop').click();
   }
   // achter de schermen: de route van de vraag door Zig365
   const ads = page.getByTestId('achter-de-schermen');
-  await expect(ads).toBeVisible({ timeout: 15_000 });
+  await expect(ads).toBeVisible({ timeout: 45_000 });
   await expect(ads).toContainText('Achter de schermen');
   await page.waitForTimeout(400);
   await shot?.('achter-de-schermen');

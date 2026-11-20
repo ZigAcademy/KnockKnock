@@ -21,7 +21,7 @@ function mockLms(page: Page, start: Record<string, string> = {}) {
 const lms = (page: Page) => page.evaluate(() => (window as unknown as { __lms: { store: Record<string, string>; log: string[] } }).__lms);
 
 test('alle woningen en de finale, eindscherm en SCORM', async ({ page }) => {
-  test.setTimeout(720_000);
+  test.setTimeout(1_200_000);
   const errors: string[] = [];
   await mockLms(page);
   await startGame(page, errors);
@@ -108,7 +108,7 @@ test('alle woningen en de finale, eindscherm en SCORM', async ({ page }) => {
   expect(errors).toEqual([]);
 
   // hervatten: nieuwe sessie met dezelfde suspend_data
-  expect(JSON.parse(store['cmi.suspend_data']).p).toMatch(/^[mv]\d{5}$/);
+  expect(JSON.parse(store['cmi.suspend_data']).p).toMatch(/^[mv]\d{5}(r\d)?$/);
   const page2 = await page.context().newPage();
   // uiterlijk moet uit SCORM komen, niet uit de browser: "Wie ben jij?" wordt overgeslagen
   await page2.addInitScript(() => localStorage.removeItem('wijkwijs-speler'));

@@ -2,20 +2,20 @@ import { test, expect } from '@playwright/test';
 import { scenarios, SHOTS, startGame, speelCorporatiefase, kiesPersonage, type Hook } from './helpers';
 
 test('straat + huurderfase woning 1 (Lindelaan 14)', async ({ page }) => {
-  test.setTimeout(150_000);
+  test.setTimeout(240_000);
   const errors: string[] = [];
   await startGame(page, errors);
   await page.screenshot({ path: `${SHOTS}/01-titelscherm.png` });
 
   await page.getByTestId('start').click();
-  // Wie ben jij? kies een ander uiterlijk (vrouw, pak) en ga verder
+  // Wie ben jij? kies een ander personage (vrouw, het vierde realistische figuur) en ga verder
   await expect(page.getByTestId('maker')).toBeVisible();
   await page.locator('.maker input[name="figuur"][value="1"]').check();
-  await page.locator('.maker input[name="kleding"][value="2"]').check();
+  await page.locator('.maker input[name="mens"][value="3"]').check();
   await page.waitForTimeout(500);
   await page.screenshot({ path: `${SHOTS}/01b-wie-ben-jij.png` });
   await kiesPersonage(page);
-  expect(await page.evaluate(() => localStorage.getItem('wijkwijs-speler'))).toBe('v11020');
+  expect(await page.evaluate(() => localStorage.getItem('wijkwijs-speler'))).toBe('v11000r3');
   await page.waitForFunction(() => (window as unknown as { __wijkwijs?: Hook }).__wijkwijs?.ready === true);
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${SHOTS}/02-straat.png` });
@@ -31,7 +31,7 @@ test('straat + huurderfase woning 1 (Lindelaan 14)', async ({ page }) => {
   await page.screenshot({ path: `${SHOTS}/03-onderweg.png` });
 
   const prompt = page.getByTestId('prompt');
-  await expect(prompt).toBeVisible({ timeout: 30_000 });
+  await expect(prompt).toBeVisible({ timeout: 90_000 });
   await expect(prompt).toContainText('Lindelaan 14');
   await page.waitForTimeout(600);
   await page.screenshot({ path: `${SHOTS}/04-bij-de-deur.png` });

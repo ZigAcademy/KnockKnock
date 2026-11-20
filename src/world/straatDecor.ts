@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+import { Detail } from '../render/detail';
+import { voertuig, VOERTUIG_VOOR } from './voertuigen';
+import { fietsMesh } from './fiets';
+import { gladModel } from './glad';
+import { LAGE_RESOLUTIE } from '../game/versie';
 import type { StaticBuilder } from './builder';
 import { boxCollider, type Collider } from './collision';
 import { natuurPalet, lantaarnPalet, klikoPalet, prullenbakPalet, deurmatPalet, gebouwPalet, herkleurLak } from './paletten';
@@ -20,6 +25,8 @@ export interface DecorCtx {
   gardenDepth: number;
   houseDepth: number;
   wallHeight: number;
+  /** Groep voor losse (getextureerde) objecten, zoals de realistische auto's. */
+  extra?: THREE.Group;
 }
 
 const rot = (y: number) => new THREE.Matrix4().makeRotationY(y);
@@ -58,8 +65,12 @@ function woningDetails(ctx: DecorCtx): void {
     for (let k = 0; k < d.klikos; k++) {
       const z = 1.15 + k * 0.8;
       const grijs = k === 1;
-      const ok = b.model('straat', 'kliko', { x: cx + 2.47, y: 0.07, z, h: 1.05, rotY: Math.PI + (k ? 0.1 : -0.05) },
-        klikoPalet(grijs ? '#596069' : '#4E6247', grijs ? '#596069' : '#4E6247'));
+      const plek = { x: cx + 2.47, y: 0.07, z, h: 1.05, rotY: Math.PI + (k ? 0.1 : -0.05) };
+      const palet = klikoPalet(grijs ? '#596069' : '#4E6247', grijs ? '#596069' : '#4E6247');
+      // standaardversie: glad plastic (los object); lage resolutie: ingebakken zoals voorheen
+      const glad = ctx.extra && !LAGE_RESOLUTIE ? gladModel('straat', 'kliko', plek, palet) : null;
+      if (glad) ctx.extra!.add(glad);
+      const ok = glad ?? b.model('straat', 'kliko', plek, palet);
       if (!ok) b.box(0.55, 1.0, 0.7, cx + 2.47, 0.07, z, grijs ? '#596069' : '#4E6247');
       colliders.push(boxCollider(cx + 2.15, cx + 2.8, z - 0.4, z + 0.4, 1.05, false));
     }
@@ -87,7 +98,12 @@ function woningDetails(ctx: DecorCtx): void {
     }
     // fiets in de voortuin, tegen de gevel
     if (d.fiets) {
-      fiets(b, cx - 2.0, 0.07, 1.25, 0.15, i % 2 ? '#4C4F63' : '#5F6B58');
+      const kleur = i % 2 ? '#4C4F63' : '#5F6B58';
+      if (ctx.extra && !LAGE_RESOLUTIE) {
+        const f = fietsMesh(kleur, i % 2 ? 'fiets-retro' : 'fiets-mtb');
+        f.position.set(cx - 2.0, 0.07, 1.25); f.rotation.y = 0.15;
+        ctx.extra.add(f);
+      } else fiets(b, cx - 2.0, 0.07, 1.25, 0.15, kleur);
       colliders.push(boxCollider(cx - 2.95, cx - 1.05, 0.95, 1.55, 1.0, false));
     }
     // dakkapel op het voordakvlak
@@ -123,7 +139,7 @@ function dakkapel(b: StaticBuilder, x: number, H: number, muur: string): void {
   // voordakvlak loopt van (z 0.35, y H) naar (z -4, y H + 2.8)
   const zf = -1.35, yv = H + (0.35 - zf) * (2.8 / 4.35);
   b.box(2.4, 1.35, 2.2, x, yv - 0.55, zf - 1.1, muur);
-  b.box(2.6, 0.14, 2.5, x, yv + 0.8, zf - 1.15, WORLD.roofEdge);
+  b.box(2.6, 0.14, 2.5, x, yv + 0.8, zf - 1.15, WORLD.roofAlt);
   b.box(2.0, 0.95, 0.06, x, yv - 0.35, zf + 0.01, WORLD.frame);
   b.box(1.8, 0.8, 0.08, x, yv - 0.28, zf + 0.02, WORLD.glass);
   b.box(0.06, 0.8, 0.1, x, yv - 0.28, zf + 0.03, WORLD.frame);
@@ -184,7 +200,7 @@ function speeltuin(ctx: DecorCtx): void {
     for (let k = 0; k < n; k++) {
       const t = (k + 0.5) / n;
       const x = ax + (bx - ax) * t, z = az + (bz - az) * t;
-      if (!b.model('natuur', 'hek', { x, z, w: len / n, rotY: ry }, natuurPalet())) b.box(len / n, 0.6, 0.06, x, 0, z, '#7E6249', { rotY: ry });
+      if (!b.model('natuur', 'hek', { x, z, w: len / n, rotY: ry }, natuurPalet(), { detail: Detail.Hout })) b.box(len / n, 0.6, 0.06, x, 0, z, '#7E6249', { rotY: ry });
     }
     colliders.push(boxCollider(Math.min(ax, bx) - 0.1, Math.max(ax, bx) + 0.1, Math.min(az, bz) - 0.1, Math.max(az, bz) + 0.1, 0.6, false));
   };
@@ -250,11 +266,11 @@ function groen(ctx: DecorCtx): void {
 // ---------------------------------------------------------------- auto's
 
 /** Geparkeerde auto's aan de overkant (gedempte kleuren, geen hulpdiensten). */
-export const GEPARKEERD: { model: string; x: number; lak: string; ry: number }[] = [
+export const GEPARKEERD: { model: string; x: number; lak: string; ry: number; echt?: string }[] = [
   { model: 'sedan', x: 1.5, lak: '#7D8A93', ry: Math.PI / 2 },
   { model: 'van', x: 7.5, lak: '#A39A8C', ry: Math.PI / 2 },
   { model: 'suv', x: 19.5, lak: '#6E7B6A', ry: -Math.PI / 2 },
-  { model: 'sedan', x: 29.2, lak: '#8E6E68', ry: Math.PI / 2 },
+  { model: 'sedan', x: 29.2, lak: '#8E6E68', ry: Math.PI / 2, echt: 'stationwagen' },
   { model: 'bestelbus', x: 35.6, lak: '#C9C6BE', ry: -Math.PI / 2 },
 ];
 export const PARKEER_Z = 11.72;
@@ -262,6 +278,21 @@ export const PARKEER_Z = 11.72;
 function geparkeerdeAutos(ctx: DecorCtx): void {
   const { b, colliders } = ctx;
   for (const a of GEPARKEERD) {
+    // realistische auto (eigen textuur, dus niet ingebakken) of anders de oude Kenney-auto
+    const echt = ctx.extra ? voertuig(VOERTUIG_VOOR[a.echt ?? a.model] ?? a.model) : null;
+    if (echt && ctx.extra) {
+      echt.position.set(a.x, 0.01, PARKEER_Z);
+      echt.rotation.y = a.ry;
+      echt.name = `geparkeerd-${a.echt ?? a.model}`;
+      ctx.extra.add(echt);
+      const lengte = new THREE.Box3().setFromObject(echt).getSize(new THREE.Vector3());
+      const half = Math.max(lengte.x, lengte.z) / 2;
+      const col = boxCollider(a.x - half, a.x + half, PARKEER_Z - 0.95, PARKEER_Z + 0.95, 1.5, false);
+      colliders.push(col);
+      // instappen en rijden (src/player/rijden.ts)
+      echt.userData.rijdbaar = { object: echt, collider: col };
+      continue;
+    }
     const maat = b.model('autos', a.model, { x: a.x, y: 0.01, z: PARKEER_Z, w: 1.6, rotY: a.ry }, undefined, { nabewerk: (g) => herkleurLak(g, a.lak) });
     if (!maat) continue;
     const half = maat.z / 2;
@@ -282,8 +313,11 @@ function achtergrond(ctx: DecorCtx): void {
     ['flat-balkon', -18, 60, 14, Math.PI], ['huis-dubbel', 6, 64, 11, Math.PI], ['flat-slank', 30, 66, 16, Math.PI],
     ['huis-breed', 54, 58, 10, Math.PI + 0.3], ['huis-dubbel', -52, 10, 11, Math.PI / 2], ['flat-balkon', -54, -16, 14, Math.PI / 2],
   ];
+  // standaardversie: de gebouwen staan langs de ringweg (src/world/achtergrond.ts)
+  if (!LAGE_RESOLUTIE) return;
   rij.forEach(([m, x, z, h, ry], k) => b.model('gebouwen', m, { x, z, h, rotY: ry }, gebouwPalet(tonen[(k * 3) % tonen.length]), { castShadow: false }));
 }
+
 
 function zebrapad(ctx: DecorCtx): void {
   for (let z = 6.0; z < 12.3; z += 1.0) ctx.b.box(2.8, 0.013, 0.5, ZEBRA_X, 0, z, '#E4E4DF', { castShadow: false });
