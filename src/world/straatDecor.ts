@@ -68,7 +68,7 @@ function woningDetails(ctx: DecorCtx): void {
       const plek = { x: cx + 2.47, y: 0.07, z, h: 1.05, rotY: Math.PI + (k ? 0.1 : -0.05) };
       const palet = klikoPalet(grijs ? '#596069' : '#4E6247', grijs ? '#596069' : '#4E6247');
       // standaardversie: glad plastic (los object); lage resolutie: ingebakken zoals voorheen
-      const glad = ctx.extra && !LAGE_RESOLUTIE ? gladModel('straat', 'kliko', plek, palet) : null;
+      const glad = ctx.extra && !LAGE_RESOLUTIE ? gladModel('straat', 'kliko', plek, palet, 0.55, grijs ? 'grijs' : 'groen') : null;
       if (glad) ctx.extra!.add(glad);
       const ok = glad ?? b.model('straat', 'kliko', plek, palet);
       if (!ok) b.box(0.55, 1.0, 0.7, cx + 2.47, 0.07, z, grijs ? '#596069' : '#4E6247');

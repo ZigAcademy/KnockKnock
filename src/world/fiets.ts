@@ -90,7 +90,11 @@ function bouwGedeeld(): NonNullable<typeof gedeeld> {
 const FRAME = ['phong4', 'phong8'];
 type Model = { delen: { geo: THREE.BufferGeometry; mat: THREE.Material; frame: boolean }[]; m: THREE.Matrix4 };
 const modellen = new Map<string, Model | null>();
+const restMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0.4 });
 const retroLak = new Map<string, Map<THREE.Material, THREE.Material>>();
+/** Eén gedeeld framemateriaal per bronmateriaal (glanzend), waarvan de kleurvarianten afstammen (voor het bundelen). */
+const primair = new Map<THREE.Material, THREE.MeshStandardMaterial>();
+const framePrimair = (m: THREE.Material) => { let p = primair.get(m); if (!p) { p = (m as THREE.MeshStandardMaterial).clone(); p.roughness = 0.35; p.metalness = 0.3; primair.set(m, p); } return p; };
 /** soort: 'fiets-retro' (omafiets, frame in eigen kleur) of 'fiets-mtb' ("Bike" door T-FLEX CAD ST, CC BY 4.0; gele mountainbike). */
 function kitFiets(kleur: string, soort: string): THREE.Group | null {
   if (!modellen.has(soort)) {
@@ -121,7 +125,21 @@ function kitFiets(kleur: string, soort: string): THREE.Group | null {
       const mat = me.material as THREE.Material;
       delen.push({ geo, mat, frame: FRAME.includes(mat.name) });
     });
-    modellen.set(soort, { delen, m });
+    // weinig draw calls: alle frame-delen samen, en alle overige delen samen met vertexkleuren
+    // (de kleur van hun materiaal; getextureerde delen, zoals het mandje, houden hun eigen materiaal)
+    const kaal = (g: THREE.BufferGeometry, kleur?: THREE.Color) => {
+      const n = g.index ? g.toNonIndexed() : g.clone();
+      for (const k of Object.keys(n.attributes)) if (!['position', 'normal', 'uv'].includes(k)) n.deleteAttribute(k);
+      if (!n.getAttribute('uv')) n.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(n.getAttribute('position').count * 2), 2));
+      if (kleur) { const c = new Float32Array(n.getAttribute('position').count * 3); for (let i = 0; i < c.length; i += 3) { c[i] = kleur.r; c[i + 1] = kleur.g; c[i + 2] = kleur.b; } n.setAttribute('color', new THREE.BufferAttribute(c, 3)); }
+      return n;
+    };
+    const frame = delen.filter((d) => d.frame), getextureerd = delen.filter((d) => !d.frame && (d.mat as THREE.MeshStandardMaterial).map), rest = delen.filter((d) => !d.frame && !(d.mat as THREE.MeshStandardMaterial).map);
+    const samen: typeof delen = [];
+    if (frame.length) samen.push({ geo: mergeGeometries(frame.map((d) => kaal(d.geo)))!, mat: frame[0].mat, frame: true });
+    for (const d of getextureerd) samen.push(d);
+    if (rest.length) samen.push({ geo: mergeGeometries(rest.map((d) => kaal(d.geo, (d.mat as THREE.MeshStandardMaterial).color)))!, mat: restMat, frame: false });
+    modellen.set(soort, { delen: samen, m });
   }
   const retro = modellen.get(soort);
   if (!retro) return null;
@@ -135,7 +153,7 @@ function kitFiets(kleur: string, soort: string): THREE.Group | null {
   for (const d of retro.delen) {
     let mat = d.mat;
     if (d.frame) {
-      mat = lak.get(d.mat) ?? (() => { const n = (d.mat as THREE.MeshStandardMaterial).clone(); n.color.set(kleur); n.roughness = 0.35; n.metalness = 0.3; lak!.set(d.mat, n); return n; })();
+      mat = lak.get(d.mat) ?? (() => { const n = (d.mat as THREE.MeshStandardMaterial).clone(); n.color.set(kleur); n.roughness = 0.35; n.metalness = 0.3; n.userData.basis = framePrimair(d.mat); lak!.set(d.mat, n); return n; })();
     }
     const me = new THREE.Mesh(d.geo, mat);
     me.castShadow = true; me.receiveShadow = true;
@@ -149,7 +167,7 @@ const lakken = new Map<string, THREE.Material>();
 /** Nieuwe fiets: de retrofiets als die geladen is, anders de fiets uit code. Op de standaard, licht scheef. */
 export function fietsMesh(kleur: string, soort: 'fiets-retro' | 'fiets-mtb' = 'fiets-retro'): THREE.Group {
   const echt = kitFiets(kleur, soort) ?? kitFiets(kleur, 'fiets-retro');
-  if (echt) { const h = new THREE.Group(); echt.rotation.x = 0.05; h.add(echt); return h; }
+  if (echt) { const h = new THREE.Group(); echt.rotation.x = 0.05; h.add(echt); h.name = 'fiets'; h.userData.bundel = true; return h; }
   gedeeld ??= bouwGedeeld();
   let lak = lakken.get(kleur);
   if (!lak) { lak = new THREE.MeshStandardMaterial({ color: kleur, roughness: 0.35, metalness: 0.35 }); lakken.set(kleur, lak); }

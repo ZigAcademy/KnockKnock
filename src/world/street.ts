@@ -14,6 +14,7 @@ import { hegStukken, grasPlakken, hegDichtbij, heeftHegModel } from './groen';
 import { fietsMesh } from './fiets';
 import { bouwRingweg } from './ringweg';
 import { bouwAankleding } from './aankleding';
+import { bundel } from './bundel';
 import type { Gevel } from './achtergrond';
 import { LAGE_RESOLUTIE } from '../game/versie';
 import { woordmerkMateriaal, icoonMateriaal, WOORDMERK_VERHOUDING } from './logos';
@@ -392,6 +393,7 @@ export function buildStreet(): Street {
     const p = paal.clone(true);
     p.position.set(px, 0, fz - fd / 2 + 0.2);
     p.traverse((o: THREE.Object3D) => { o.castShadow = true; o.receiveShadow = true; });
+    p.userData.bundel = true;
     losseObjecten.add(p);
     colliders.push(boxCollider(px - 0.25, px + 0.25, fz - fd / 2 + 0.05, fz - fd / 2 + 0.35, 1, false));
   }
@@ -420,6 +422,7 @@ export function buildStreet(): Street {
     gardenDepth: LAYOUT.gardenDepth, houseDepth: D, wallHeight: H, extra: losseObjecten,
   });
   if (!LAGE_RESOLUTIE) bouwAankleding({ b, beplanting, losse: losseObjecten, colliders, gevels, huizen: HUISNUMMERS.slice(0, -1).map((_, i) => houseX(i)) });
+  if (!LAGE_RESOLUTIE) bundel(losseObjecten);
   group.add(b.build());
   // standaardversie: graspollen op de gazons en in het park, losse blaadjes langs de heggen
   if (!LAGE_RESOLUTIE) {

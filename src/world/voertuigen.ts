@@ -41,5 +41,6 @@ export function voertuig(naam: string): THREE.Object3D | null {
     m.castShadow = true; m.receiveShadow = true;
     for (const mat of Array.isArray(m.material) ? m.material : [m.material]) verfijn(mat);
   });
+  o.userData.bundel = true;
   return o;
 }

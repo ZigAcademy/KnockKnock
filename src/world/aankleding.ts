@@ -152,7 +152,7 @@ export function bouwAankleding(ctx: AankledingCtx): void {
       const ryGevel = Math.atan2(voor.x, voor.z);
       // kliko's tegen de gevel
       const k = thuis(i % 2 ? -2.4 : 2.4, 0.6);
-      const kliko = gladModel('straat', 'kliko', { x: k.x, y: 0, z: k.z, h: 1.05, rotY: ryGevel + Math.PI }, klikoPalet('#4E6247', '#4E6247'));
+      const kliko = gladModel('straat', 'kliko', { x: k.x, y: 0, z: k.z, h: 1.05, rotY: ryGevel + Math.PI }, klikoPalet('#4E6247', '#4E6247'), 0.55, 'groen');
       if (kliko) losse.add(kliko);
       // pot met plant naast de deur
       const d = thuis(i % 2 ? 0.6 : -0.6, 0.45);

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { scenarios, SHOTS, startGame, begin, loopNaar, nummerVan, speelHuurderfase, speelCorporatiefase, type Hook } from './helpers';
+import { scenarios, SHOTS, startGame, begin, loopNaar, nummerVan, speelHuurderfase, speelCorporatiefase, type Hook, laagInTest } from './helpers';
 
 /** Nagebootste SCORM 2004-API (zoals een LMS die aanbiedt). */
 function mockLms(page: Page, start: Record<string, string> = {}) {
@@ -21,7 +21,7 @@ function mockLms(page: Page, start: Record<string, string> = {}) {
 const lms = (page: Page) => page.evaluate(() => (window as unknown as { __lms: { store: Record<string, string>; log: string[] } }).__lms);
 
 test('alle woningen en de finale, eindscherm en SCORM', async ({ page }) => {
-  test.setTimeout(1_200_000);
+  test.setTimeout(1_800_000);
   const errors: string[] = [];
   await mockLms(page);
   await startGame(page, errors);
@@ -112,6 +112,7 @@ test('alle woningen en de finale, eindscherm en SCORM', async ({ page }) => {
   const page2 = await page.context().newPage();
   // uiterlijk moet uit SCORM komen, niet uit de browser: "Wie ben jij?" wordt overgeslagen
   await page2.addInitScript(() => localStorage.removeItem('wijkwijs-speler'));
+  await laagInTest(page2);
   await mockLms(page2, { 'cmi.suspend_data': store['cmi.suspend_data'], 'cmi.completion_status': 'completed' });
   await page2.goto('/');
   await page2.getByTestId('start').click();

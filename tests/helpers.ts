@@ -53,9 +53,20 @@ export async function begin(page: Page) {
 /** Klik-om-te-lopen naar het tuinpad van een huisnummer en wacht op de aanbelknop. */
 export async function loopNaar(page: Page, nr: number) {
   await page.waitForTimeout(1500); // camera terug achter de speler
-  const p = await page.evaluate((n) => (window as unknown as { __wijkwijs: Hook }).__wijkwijs.standPoint(n), nr);
+  let p = await page.evaluate((n) => (window as unknown as { __wijkwijs: Hook }).__wijkwijs.standPoint(n), nr);
   expect(p).not.toBeNull();
   const vp = page.viewportSize()!;
+  if (!(p!.x > 0 && p!.x < vp.width && p!.y > 0 && p!.y < vp.height)) {
+    // tuinpad buiten beeld (camera kijkt de andere kant op): camera achter de speler, richting het tuinpad
+    await page.evaluate((n) => {
+      const w = (window as unknown as { __wijkwijs: { straat: { player: { position: { x: number; z: number } }; doors: Map<number, { stand: { x: number; z: number } }> }; debugCam: (v: object) => void } }).__wijkwijs;
+      const pos = w.straat.player.position, s = w.straat.doors.get(n)!.stand;
+      const rot = Math.atan2(s.x - pos.x, s.z - pos.z);
+      w.debugCam({ x: pos.x, z: pos.z, yaw: rot + Math.PI, pitch: 0.42, dist: 7, rot });
+    }, nr);
+    await page.waitForTimeout(1500);
+    p = await page.evaluate((n) => (window as unknown as { __wijkwijs: Hook }).__wijkwijs.standPoint(n), nr);
+  }
   expect(p!.x > 0 && p!.x < vp.width && p!.y > 0 && p!.y < vp.height, `tuinpad ${nr} in beeld`).toBe(true);
   await page.mouse.click(p!.x, p!.y);
   const prompt = page.getByTestId('prompt');

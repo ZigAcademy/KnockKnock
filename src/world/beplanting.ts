@@ -99,7 +99,7 @@ export class Beplanting {
       if (!naam.startsWith('boom')) { lijsten.push([naam, matrices]); continue; }
       const vakken = new Map<string, THREE.Matrix4[]>();
       const p = new THREE.Vector3();
-      for (const m of matrices) { p.setFromMatrixPosition(m); const k = `${Math.floor(p.x / 60)},${Math.floor(p.z / 60)}`; vakken.set(k, [...(vakken.get(k) ?? []), m]); }
+      for (const m of matrices) { p.setFromMatrixPosition(m); const k = `${Math.floor(p.x / 100)},${Math.floor(p.z / 100)}`; vakken.set(k, [...(vakken.get(k) ?? []), m]); }
       for (const l of vakken.values()) lijsten.push([naam, l]);
     }
     for (const [naam, matrices] of lijsten) {

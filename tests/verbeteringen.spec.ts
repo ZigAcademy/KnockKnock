@@ -302,8 +302,9 @@ test.describe('7 + 8. leven in de straat', () => {
     // (het kan net stilstaan voor een woning; zonder GPU loopt de speltijd trager, dus ruim wachten)
     const a = await hook(page, (h) => h.busje());
     let verst = 0;
-    for (let i = 0; i < 40 && verst <= 1; i++) {
-      await page.waitForTimeout(500);
+    // speltijd zelf vooruitzetten (vaste stappen van 0,05 s), onafhankelijk van de snelheid van de testbrowser
+    for (let i = 0; i < 12 && verst <= 1; i++) {
+      await page.evaluate(() => { const s = (window as unknown as { __wijkwijs: { straat: { update: (dt: number, t: number, rm: boolean) => void } } }).__wijkwijs.straat; for (let k = 0; k < 20; k++) s.update(0.05, k * 0.05, false); });
       const b = await hook(page, (h) => h.busje());
       verst = Math.max(verst, Math.hypot(b.x - a.x, b.z - a.z));
     }

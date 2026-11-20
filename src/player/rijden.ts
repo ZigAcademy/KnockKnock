@@ -12,7 +12,7 @@ import { moveWithCollision, type Collider } from '../world/collision';
 const MAX = 13, ACHTERUIT = 4, GAS = 5.5, REM = 11, RUW = 3;
 const STRAAL = 0.95;
 
-export interface Rijdbaar { object: THREE.Object3D; collider: Collider }
+export interface Rijdbaar { object: THREE.Object3D; collider: Collider; /** Gebundelde auto: maak hem los uit de bundel. */ activeer?: () => void }
 
 export class Rijden {
   auto: Rijdbaar | null = null;
@@ -27,6 +27,7 @@ export class Rijden {
   get snelheid(): number { return Math.abs(this.v); }
 
   instappen(a: Rijdbaar): void {
+    a.activeer?.();
     this.auto = a;
     // het eigen botsvak tijdelijk weg (anders bots je tegen jezelf)
     const i = this.colliders.indexOf(a.collider);
